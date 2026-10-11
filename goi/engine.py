@@ -137,13 +137,6 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             if tp.so_mau and so_to * tp.so_mat < 3000:
                 r["co_dinh"] += tien_in
         tien_giay = so_to * gt
-        if kts:
-            tien_in = so_to * tp.so_mat * K["in_kts_to_33x60"] if tp.so_mau else 0
-        else:
-            tien_in = cong_in(so_to, tp.so_mau, tp.so_mat)
-            kem += tp.so_mau * tp.so_mat
-            if tp.so_mau and so_to * tp.so_mat < 3000:
-                r["co_dinh"] += tien_in
         dien_tich_sp += tp.trai_w * tp.trai_h * tp.con_moi_sp / 10000
         r["dong"].append((f"{tp.ten} {tp.loai} {tp.gsm}g ({u} con/tờ {W}×{H}, {fmt(so_to)} tờ)", tien_giay))
         if tien_in:
