@@ -304,7 +304,10 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
     r["van_chuyen"] = tong * P["pct_van_chuyen"]
     r["chi_phi"] = tong + r["van_chuyen"]
     r["gia_von"] = r["chi_phi"] / SL
-    ln = don.pct_ln if don.pct_ln is not None else (K["pct_loi_nhuan"] if kts else P["pct_loi_nhuan"])
+    if don.pct_ln is not None:
+        ln = don.pct_ln
+    else:
+        ln = next((pc for nguong, pc in P.get("bac_loi_nhuan", {}).get("bac", []) if SL < nguong), P["pct_loi_nhuan"])
     r["pct_ln"] = ln
     r["gia_ban"] = r["chi_phi"] * (1 + ln) / SL
     lt = P["lam_tron"]
@@ -437,17 +440,17 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
         L.append("• Gia công: " + ", ".join(gc_ten))
     L.append("")
     che_do = "in KTS, phí trọn gói lô" if ket_qua[0]["kts"] else "in offset"
-    L.append(f"💰 BÁO GIÁ ({che_do}; chưa VAT {int(P['vat'] * 100)}%, đã gồm lợi nhuận {int(ket_qua[0]['pct_ln'] * 100)}%)")
+    L.append(f"💰 BÁO GIÁ ({che_do}; chưa VAT {int(P['vat'] * 100)}%, chưa gồm vận chuyển tới khách)")
     for r in ket_qua:
         L.append(f"🔹 {fmt(r['SL'])} cái: {fmt(r['gia_ban_tron'])} đ/cái · tổng {fmt(r['gia_ban_tron'] * r['SL'])} đ "
-                 f"(chi phí {fmt(r['chi_phi'])} đ = {fmt_vn(r['gia_von'])} đ/cái)")
+                 f"(chi phí {fmt(r['chi_phi'])} đ = {fmt_vn(r['gia_von'])} đ/cái, lãi {int(round(r['pct_ln'] * 100))}%)")
     r0 = ket_qua[0]
     L.append("")
     L.append(f"📌 Chi phí cố định (kẽm, công in tối thiểu, khuôn): {fmt(r0['co_dinh'])} đ "
              f"= {fmt(r0['co_dinh'] / r0['SL'])} đ/cái ở mức {fmt(r0['SL'])} cái.")
     L.append("🧾 Bóc tách @" + fmt(r0["SL"]) + ": " + "; ".join(f"{t} {fmt(v)}" for t, v in r0["dong"] if v) + ".")
     khac = tinh(don, r0["SL"], kts=not r0["kts"])
-    kha_thi = r0["kts"] or all(ups(*P["don_kts"]["kho_in_nhanh"], tp.trai_w, tp.trai_h) for tp in don.thanh_phan if tp.so_mau)
+    kha_thi = r0["kts"] or all(max(ups(*k["kho"], tp.trai_w, tp.trai_h) for k in P["don_kts"]["kho_in_nhanh"]) for tp in don.thanh_phan if tp.so_mau)
     if not kha_thi:
         L.append("🔁 Khổ trải vượt 33×60 cm nên bắt buộc in offset.")
     else:

@@ -289,7 +289,7 @@
         ]
       }
     },
-    "pct_loi_nhuan": 0.26,
+    "pct_loi_nhuan": 0.35,
     "nguong_to": 500,
     "kho_in_nhanh": [
       {
@@ -347,5 +347,23 @@
       "thung_carton"
     ]
   },
-  "_decal": "My 12/10/2026: decal giấy 11.000 đ/m², cán màng mờ 1 mặt, bế demi tối thiểu 200k/lô. Decal nhựa chưa có giá."
+  "_decal": "My 12/10/2026: decal giấy 11.000 đ/m², cán màng mờ 1 mặt, bế demi tối thiểu 200k/lô. Decal nhựa chưa có giá.",
+  "bac_loi_nhuan": {
+    "_ghi_chu": "My 12/10/2026: đơn nhỏ 30-40% (bot lấy 35%), từ 1.000 sp 30%, đơn lặp lại từ 3.000 sp 25%. Tin ghi 'lợi nhuận x%' thì theo tin.",
+    "bac": [
+      [
+        1000,
+        0.35
+      ],
+      [
+        3000,
+        0.3
+      ],
+      [
+        999999999,
+        0.25
+      ]
+    ]
+  },
+  "_van_chuyen": "My 12/10/2026: 5% bao bì + vận chuyển là giá nội bộ; chưa có chính sách vận chuyển cho khách → báo giá ghi 'chưa gồm vận chuyển'."
 }
