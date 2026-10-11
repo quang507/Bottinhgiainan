@@ -118,6 +118,7 @@ class DonHang:
     so_mep_dan: int = 1
     tui_2_manh: bool = False
     gia_quai: float = None
+    can_mang_2_mat: bool = False
 
 
 def nen_in_nhanh(don: DonHang, SL: int) -> bool:
@@ -127,7 +128,7 @@ def nen_in_nhanh(don: DonHang, SL: int) -> bool:
     for tp in don.thanh_phan:
         if not tp.so_mau:
             continue
-        u = ups(*K["kho_in_nhanh"], tp.trai_w, tp.trai_h)
+        u = max(ups(*k["kho"], tp.trai_w, tp.trai_h) for k in K["kho_in_nhanh"])
         if u == 0:
             return False
         tong_to += SL * tp.con_moi_sp / u
@@ -145,7 +146,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
     tong_nhip = 0.0
     for tp in don.thanh_phan:
         # Chọn khổ theo tổng chi phí giấy + in thấp nhất (bình bài ảo), trừ khi tin đã chỉ định khổ/số con
-        ung_vien = [(don.kho, don.con)] if (don.kho and don.con) else             [((W, H), ups_cat_tai(W, H, tp.trai_w, tp.trai_h, don.loai_sp in ("hop_gap", "tui_giay") and tp.loai not in ("Chipboard", "Decal") and tp.con_moi_sp == 1)) for W, H in ([K["kho_in_nhanh"]] if (kts and tp.so_mau) else P["kho_giay"])]
+        ung_vien = [(don.kho, don.con)] if (don.kho and don.con) else             [((W, H), ups_cat_tai(W, H, tp.trai_w, tp.trai_h, don.loai_sp in ("hop_gap", "tui_giay") and tp.loai not in ("Chipboard", "Decal") and tp.con_moi_sp == 1)) for W, H in (([k["kho"] for k in K["kho_in_nhanh"]]) if (kts and tp.so_mau) else P["kho_giay"])]
         ung_vien = [(k, u) for k, u in ung_vien if (u[0] if isinstance(u, tuple) else u)]
         if not ung_vien:
             r["dong"].append((f"{tp.ten}: khổ trải {tp.trai_w}×{tp.trai_h} vượt khổ giấy", 0))
@@ -163,8 +164,19 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             gt = (W * H * tp.gsm * don.gia_giay / 10000) if (don.gia_giay and tp.loai not in ("Chipboard", "Decal")) else gia_to(W, H, tp.loai, tp.gsm)
             phuong_an = []
             if kts:
-                tien_in = so_to * tp.so_mat * K["in_kts_to_33x60"] if tp.so_mau else 0
-                phuong_an.append((so_to * gt + tien_in, u, so_to, tien_in, 0, ""))
+                kk = next((k for k in K["kho_in_nhanh"] if k["kho"] == [W, H]), None)
+                gia_to_in = (kk["gia_2_mat"] if tp.so_mat == 2 else kk["gia_1_mat"]) if kk else None
+                if gia_to_in is None and tp.so_mau:
+                    continue   # khổ này không in được số mặt yêu cầu
+                if tp.so_mau and kk:
+                    tien_in = so_to * gia_to_in
+                    if kk.get("uoc_tinh") or (tp.so_mat != 2 and kk.get("uoc_tinh_1_mat")):
+                        nhan_kts = f"in KTS {kk['ten']} {fmt(gia_to_in)}đ/tờ (ước tính)"
+                    else:
+                        nhan_kts = f"in KTS {kk['ten']} {fmt(gia_to_in)}đ/tờ {tp.so_mat} mặt"
+                else:
+                    tien_in, nhan_kts = 0, ""
+                phuong_an.append((so_to * gt + tien_in, u, so_to, tien_in, 0, nhan_kts))
             elif tp.so_mat == 2 and tp.so_mau:
                 # AB: 2 bộ kẽm, đủ con/tờ, 2 tay in
                 if don.kieu_2_mat in (None, "AB"):
@@ -184,7 +196,9 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
                 if tot_nhat is None or tong_tp < tot_nhat[0]:
                     tot_nhat = (tong_tp, W, H, u_, so_to_, gt, tien_in_, cat, kem_, nhan)
         _, W, H, u, so_to, gt, tien_in, cat, kem_tp, nhan = tot_nhat
-        if nhan:
+        if nhan and "(ước tính)" in nhan:
+            r["uoc_tinh"].append(nhan)
+        elif nhan:
             r["dong"].append((f"{tp.ten}: {nhan}", 0))
         if cat:
             r["uoc_tinh"].append(f"{tp.ten.lower()}: bớt tai dán {cat} cm để xếp {u} con/tờ {W}×{H}, My duyệt")
@@ -197,7 +211,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         dien_tich_sp += tp.trai_w * tp.trai_h * tp.con_moi_sp / 10000
         r["dong"].append((f"{tp.ten} {tp.loai} {tp.gsm}g ({u} con/tờ {W}×{H}, {fmt(so_to)} tờ)", tien_giay))
         if tien_in:
-            r["dong"].append(((f"In KTS {fmt(so_to * tp.so_mat)} lượt" if kts else f"Công in {tp.so_mau} màu {tp.so_mat} mặt") + f" {tp.ten.lower()}", tien_in))
+            r["dong"].append(((f"In KTS {fmt(so_to)} tờ" if kts else f"Công in {tp.so_mau} màu {tp.so_mat} mặt") + f" {tp.ten.lower()}", tien_in))
         tong += tien_giay + tien_in
         if tp.uoc_tinh:
             r["uoc_tinh"].append(tp.ten)
@@ -221,7 +235,10 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         nhan = g["ten"]
         khuon_gc = g.get("khuon", 0)
         if g["don_vi"] == "m2":
-            tien = max(SL * dien_tich_sp * g["gia"], g.get("san", 0))
+            he_so = 2 if (key in ("can_mo", "can_bong") and don.can_mang_2_mat) else 1
+            tien = max(SL * dien_tich_sp * g["gia"] * he_so, g.get("san", 0))
+            if he_so == 2:
+                nhan = g["ten"] + " 2 mặt"
         elif g["don_vi"] == "lo":
             tien = g["gia"]
         elif g["don_vi"] == "nhip":
@@ -270,7 +287,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
     if don.khuon_be:
         if don.khuon_be_tien is not None:
             kb = don.khuon_be_tien
-        elif kts:
+        elif kts and don.loai_sp in K.get("khuon_cho_loai", []):
             kb = K["khuon"]
         else:
             KB = P.get("khuon_be_theo_kich_thuoc")
@@ -322,6 +339,7 @@ def dung_don(spec: dict) -> DonHang:
     don.so_mep_dan = spec.get("so_mep_dan") or (3 if any(k in kieu for k in ("đáy khóa", "đáy cài", "khóa đáy")) else 1)
     don.tui_2_manh = bool(spec.get("tui_2_manh"))
     don.gia_quai = spec.get("gia_quai")
+    don.can_mang_2_mat = bool(spec.get("can_mang_2_mat"))
     don.loai_sp = spec.get("loai") or "hop_gap"
     don.gc_tuy_chinh = [(g["ten"], g["gia_moi_cai"]) for g in (spec.get("gia_cong_tuy_chinh") or [])]
     if not spec.get("giay"):
@@ -374,8 +392,9 @@ def _dung_don(spec: dict) -> DonHang:
         return DonHang(ten or "Thiệp", tp, gc, khuon_be=0)
     if loai == "tem_decal":
         tp = [ThanhPhan("Tem decal", "Decal", 1, (D or 5) + 0.4, (R or 5) + 0.4, 1, mau, 1)]
-        if "be" not in gc:
-            gc.append("be")
+        gc = [g for g in gc if g != "be"]
+        if "be_demi" not in gc:
+            gc.append("be_demi")
         return DonHang(ten or "Tem decal", tp, gc, khuon_be=1)
     if loai == "tui_giay":
         tp = [ThanhPhan("Túi giấy", giay, gsm, 2 * (D + R) + 3, C + R + 5, 1, mau, 1)]

@@ -38,6 +38,7 @@ class Spec(BaseModel):
     so_mep_dan: Optional[int] = Field(description="Số mép dán của hộp nếu tin nói (nắp gài 1 mép, đáy khóa/đáy cài 3 mép); null nếu không")
     tui_2_manh: Optional[bool] = Field(description="Túi giấy dán 2 mảnh → true; 1 mảnh → false; null nếu không nói")
     gia_quai: Optional[float] = Field(description="Giá quai túi đ/cặp nếu tin nói; null nếu không")
+    can_mang_2_mat: bool = Field(description="true nếu tin nói cán màng (mờ/bóng) 2 mặt")
     kieu_in_2_mat: Optional[Literal["AB", "tu_tro", "tro_nhip"]] = Field(description="Chỉ khi in 2 mặt và tin nói rõ: bình AB/sheet-wise → AB; tự trở/work and turn → tu_tro; trở nhíp/work and tumble → tro_nhip; null nếu không nói")
     in_kts: Optional[bool] = Field(description="true nếu tin nói in KTS / kỹ thuật số / in nhanh; false nếu nói rõ in offset; null nếu không nói")
     thieu: List[str] = Field(description="Các thông tin bắt buộc còn thiếu để báo giá: loại sản phẩm, kích thước, số lượng. Giấy/màu/gia công thiếu thì dùng mặc định, không liệt kê.")

@@ -11,7 +11,7 @@
     "Chipboard": 5.3
   },
   "chipboard_gia_to_65x86": 3560,
-  "decal_gia_m2": 25000,
+  "decal_gia_m2": 11000,
   "kho_giay": [
     [
       65,
@@ -215,6 +215,28 @@
       "gia_toi_da": 1100,
       "san": 0,
       "_ghi_chu": "My: 350–1.100đ/cặp tùy dây, mặc định dây phổ thông"
+    },
+    "be_demi": {
+      "ten": "Bế demi",
+      "don_vi": "nhip",
+      "gia": 750,
+      "gia_toi_thieu": 450,
+      "bac_nhip": [
+        [
+          1000,
+          750
+        ],
+        [
+          3000,
+          600
+        ],
+        [
+          999999999,
+          450
+        ]
+      ],
+      "san": 200000,
+      "_ghi_chu": "My: bế demi tối thiểu 200k/lô; đơn giá nhịp lấy như bế thường (chưa xác nhận)"
     }
   },
   "pct_van_chuyen": 0.05,
@@ -227,7 +249,7 @@
     500
   ],
   "don_kts": {
-    "_ghi_chu": "My 12/10/2026: dưới 500 tờ và khổ trải lọt 33x60cm thì in nhanh; vượt 33x60 bắt buộc offset. In KTS đ/tờ 33x60 suy từ BG00874 (500k/~90 tờ), chưa xác nhận.",
+    "_ghi_chu": "My 12/10/2026: dưới 500 tờ và khổ trải lọt 33×60 thì in nhanh; vượt thì offset. Thiệp/lô nhỏ: in KTS A4 2 mặt 10.000 đ/tờ rồi dàn con (My). Giá 33×60 và A4 1 mặt là ước tính.",
     "tu_sua_bai": 5,
     "khuon": 1000000,
     "phi_lo": {
@@ -268,12 +290,34 @@
       }
     },
     "pct_loi_nhuan": 0.26,
-    "kho_in_nhanh": [
-      33,
-      60
-    ],
     "nguong_to": 500,
-    "in_kts_to_33x60": 5500
+    "kho_in_nhanh": [
+      {
+        "ten": "33×60",
+        "kho": [
+          33,
+          60
+        ],
+        "gia_1_mat": 5500,
+        "gia_2_mat": null,
+        "uoc_tinh": true
+      },
+      {
+        "ten": "A4",
+        "kho": [
+          21,
+          29.7
+        ],
+        "gia_1_mat": 6000,
+        "gia_2_mat": 10000,
+        "uoc_tinh_1_mat": true
+      }
+    ],
+    "khuon_cho_loai": [
+      "hop_gap",
+      "hop_cung",
+      "tui_giay"
+    ]
   },
   "_hop_cung": "My 12/10/2026: hộp âm dương = 4 thành phần = 4 khuôn bế (áo nắp, áo đáy, carton nắp, carton đáy); công đoạn 4 lần bế + phay rãnh + dựng hộp + bồi hộp. Bồi tính dài×rộng×2.200 đ/m², lô tối thiểu 300k. Nắp kéo (bao diêm): bồi áo hộc cần thợ giỏi, +15k/hộp. Chipboard 2mm tính dài×rộng×định lượng×đơn giá như giấy (đơn giá/tấn chưa cho). Phay rãnh, dựng hộp chưa có đơn giá → ước tính.",
   "cong_in_toi_thieu_theo_mau": {
@@ -302,5 +346,6 @@
       "tui_giay",
       "thung_carton"
     ]
-  }
+  },
+  "_decal": "My 12/10/2026: decal giấy 11.000 đ/m², cán màng mờ 1 mặt, bế demi tối thiểu 200k/lô. Decal nhựa chưa có giá."
 }
