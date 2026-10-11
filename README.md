@@ -1,25 +1,36 @@
-# Tính giá GÓI
+# Bot tính giá in ấn GÓI
 
-Công cụ báo giá in offset / bao bì theo đúng công thức file **Báo giá My.xlsx** (xưởng in NAHT).
+Zalo Bot báo giá bao bì theo đúng công thức **Báo giá My.xlsx** (xưởng in NAHT).
+Nhắn yêu cầu vào bot (hoặc @tag bot trong nhóm) → bot bóc tách quy cách, hỏi lại nếu thiếu, rồi báo giá 3 bậc số lượng.
 
-- `index.html` – trang tính giá, chạy offline, không cần server. Mở trực tiếp bằng trình duyệt.
-  Bản online: https://claude.ai/artifact/3ye8uhcsRhLdE7KvYbWFA4
-- `baogia.py` – engine Python cùng công thức, dùng cho Zalo bot / API. Chạy `python baogia.py` để đối chiếu với Excel.
+## Cấu trúc
+- `bot.py` – vòng lặp long-polling Zalo Bot API (`getUpdates` / `sendMessage`), nhớ thông số theo từng chat trong `state.json`.
+- `goi/extract.py` – Claude bóc tách tin nhắn thành JSON (chỉ bóc tách, không tính tiền).
+- `goi/engine.py` – công thức tính giá (giấy, công in theo bậc, kẽm, gia công, khuôn, vận chuyển, lợi nhuận). Chạy `python -m goi.engine` để đối chiếu với Excel.
+- `goi/prices.json` – bảng giá xưởng. Sửa file này rồi `systemctl restart goi-bot`.
+- `index.html` – trang tính giá thủ công, mở trực tiếp bằng trình duyệt.
+- `deploy/goi-bot.service` – unit systemd cho VPS.
+
+## Lệnh trong chat
+`reset` – đơn mới · `giá` – xem bảng giá đang dùng · `help` – hướng dẫn.
+
+## Chạy trên VPS (Ubuntu)
+```bash
+apt install -y python3-venv git
+mkdir -p /opt/goi-bot && cd /opt/goi-bot   # copy code vào đây
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+cp .env.example .env && nano .env            # điền token
+cp deploy/goi-bot.service /etc/systemd/system/ && systemctl daemon-reload
+systemctl enable --now goi-bot && journalctl -u goi-bot -f
+```
 
 ## Công thức (theo ô Excel)
-
 | Khoản | Công thức |
 | --- | --- |
 | Giá tờ | Dài × Rộng (cm) × gsm × giá/gam ÷ 10.000 (giá/gam = giá tấn ÷ 1.000.000) |
-| Số tờ | SL ÷ số con/tờ × 1,03 + tờ sửa bài |
-| Công in | < 3.000 lượt: số tay × số màu × 300.000; từ 3.000: số tờ × màu × mặt × đơn giá lượt (130/120/110/90/80/60-70) |
-| CTP | số màu × số tay × 110.000 |
-| Đơn giá bán | (Chi phí + HH + Lợi nhuận) ÷ (1 − HH KH − HH KH × thuế) ÷ SL, lợi nhuận tính trên tổng chi phí |
+| Số tờ | SL ÷ số con/tờ × 1,03 + tờ sửa bài; số con/tờ xếp trên 65×43 / 65×86 / 79×109 |
+| Công in | < 3.000 lượt: số màu × 300.000; từ 3.000: số tờ × màu × mặt × đơn giá lượt (130/120/110/90/80/60) |
+| CTP | số màu × số mặt × 110.000 |
+| Giá bán | (vật tư × 1,05 vận chuyển) × (1 + lợi nhuận) ÷ SL, làm tròn lên 1.000 |
 
-Kiểm chứng: preset "Nạp mẫu Excel" (Đơn SLL, 1.000 hộp Ivory 300) phải ra **9.725,49 đ/cái**.
-
-## Chưa có trong Excel
-Hộp cứng bồi chipboard: chipboard đ/tờ, công bồi tay đ/hộp, in KTS lô nhỏ – chờ My chốt.
-
-## Kế hoạch
-Zalo OA bot: webhook → Claude bóc tách quy cách (JSON) → `baogia.py` tính → trả 3 bậc số lượng hoặc hỏi lại thông số thiếu.
+Hộp cứng bồi chipboard: chipboard đ/tờ, công bồi tay, in KTS lô nhỏ là **ước tính** cho đến khi My chốt.
