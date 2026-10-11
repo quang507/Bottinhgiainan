@@ -113,7 +113,12 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             r["dong"].append((f"{tp.ten}: khổ trải {tp.trai_w}×{tp.trai_h} vượt khổ giấy", 0))
             continue
         (W, H), u, _ = k
-        sua = don.tu_sua_bai if don.tu_sua_bai is not None else (K["tu_sua_bai"] if kts else P["tu_sua_bai"])
+        if don.tu_sua_bai is not None:
+            sua = don.tu_sua_bai
+        elif kts:
+            sua = K["tu_sua_bai"]
+        else:
+            sua = P.get("tu_sua_bai_theo_kho", {}).get(f"{W}x{H}", P["tu_sua_bai"])
         so_to = SL * tp.con_moi_sp / u * P["hao_hut"] + (sua if tp.so_mau else 10)
         gt = (W * H * tp.gsm * don.gia_giay / 10000) if (don.gia_giay and tp.loai not in ("Chipboard", "Decal")) else gia_to(W, H, tp.loai, tp.gsm)
         tien_giay = so_to * gt

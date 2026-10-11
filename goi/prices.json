@@ -240,5 +240,11 @@
     "_ghi_chu": "My 12/10/2026: giấy càng mỏng giá càng cao (hơn 10%). Áp +10% cho định lượng dưới ngưỡng.",
     "duoi_gsm": 200,
     "pct": 0.1
+  },
+  "tu_sua_bai_theo_kho": {
+    "_ghi_chu": "My 12/10/2026: sửa bài 100-300 tờ theo kích thước kẽm in. Mức theo khổ do Quang đặt, My chỉnh nếu lệch.",
+    "65x43": 100,
+    "65x86": 200,
+    "79x109": 300
   }
 }
