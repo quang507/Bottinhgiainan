@@ -79,10 +79,11 @@ class DonHang:
     khuon_be_tien: float = None
     proof: bool = True
     gc_tuy_chinh: list = field(default_factory=list)   # [(tên, đ/cái)]
+    mac_dinh: list = field(default_factory=list)       # thông số khách không nói, bot tự lấy
 
 
 def tinh(don: DonHang, SL: int):
-    r = {"SL": SL, "dong": [], "co_dinh": 0.0, "uoc_tinh": list(don.uoc_tinh)}
+    r = {"SL": SL, "dong": [], "co_dinh": 0.0, "uoc_tinh": list(don.uoc_tinh), "mac_dinh": list(don.mac_dinh)}
     tong = 0.0
     dien_tich_sp = 0.0
     kem = 0
@@ -170,6 +171,18 @@ def dung_don(spec: dict) -> DonHang:
         don.khuon_be_tien = spec["khuon_be_nghin"] * 1000
     don.proof = not spec.get("khong_proof")
     don.gc_tuy_chinh = [(g["ten"], g["gia_moi_cai"]) for g in (spec.get("gia_cong_tuy_chinh") or [])]
+    if not spec.get("giay"):
+        don.mac_dinh.append(f"giấy {don.thanh_phan[0].loai}")
+    if not spec.get("dinh_luong"):
+        don.mac_dinh.append(f"định lượng {don.thanh_phan[0].gsm}g")
+    if spec.get("so_mau") is None:
+        don.mac_dinh.append(f"in {don.thanh_phan[0].so_mau} màu")
+    if not spec.get("so_mat"):
+        don.mac_dinh.append(f"{don.thanh_phan[0].so_mat} mặt")
+    if not spec.get("gia_cong") and not don.gc_tuy_chinh:
+        don.mac_dinh.append("gia công cơ bản (bế, dán)")
+    if not don.kho:
+        don.uoc_tinh.append("khổ trải tính từ kích thước, có file khuôn sẽ chính xác hơn")
     if don.gc_tuy_chinh:
         # gia công đã có đơn giá riêng thì bỏ bản mặc định cùng tên
         ten_tc = " ".join(t.lower() for t, _ in don.gc_tuy_chinh)
@@ -256,9 +269,13 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     L.append(f"📌 Chi phí cố định (kẽm, công in tối thiểu, khuôn): {fmt(r0['co_dinh'])} đ "
              f"= {fmt(r0['co_dinh'] / r0['SL'])} đ/cái ở mức {fmt(r0['SL'])} cái.")
     L.append("🧾 Bóc tách @" + fmt(r0["SL"]) + ": " + "; ".join(f"{t} {fmt(v)}" for t, v in r0["dong"] if v) + ".")
+    if r0["mac_dinh"]:
+        L.append("ℹ️ Mặc định đã dùng (khách chưa nói): " + ", ".join(r0["mac_dinh"]) + ".")
     uoc = list(dict.fromkeys(r0["uoc_tinh"]))
     if uoc:
         L.append("⚠️ Ước tính: " + ", ".join(uoc) + ".")
+    else:
+        L.append("✅ Đủ thông số, không có khoản ước tính.")
     msg = "\n".join(L)
     return msg if len(msg) <= 1990 else msg[:1985] + "…"
 
