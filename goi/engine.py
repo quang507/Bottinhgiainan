@@ -14,10 +14,10 @@ def ups(W, H, w, h):
     return max(math.floor(W / w) * math.floor(H / h), math.floor(W / h) * math.floor(H / w))
 
 
-def chon_kho(w, h):
-    """Chọn khổ giấy công nghiệp cho tỉ lệ dùng giấy cao nhất. Trả về ((W,H), số con) hoặc None."""
+def chon_kho(w, h, kho_list=None):
+    """Chọn khổ giấy cho tỉ lệ dùng giấy cao nhất. Trả về ((W,H), số con, hiệu suất) hoặc None."""
     best = None
-    for W, H in P["kho_giay"]:
+    for W, H in (kho_list or P["kho_giay"]):
         u = ups(W, H, w, h)
         if u == 0:
             continue
@@ -29,8 +29,6 @@ def chon_kho(w, h):
 
 def gia_to(W, H, loai, gsm):
     """Giá 1 tờ giấy = Dài × Rộng × gsm × giá/gam ÷ 10.000 (ô B28)."""
-    if loai == "Chipboard":
-        return P["chipboard_gia_to_65x86"] * (W * H) / (65 * 86)
     if loai == "Decal":
         return W * H / 10000 * P["decal_gia_m2"]
     tr_tan = P["giay_tr_tan"].get(loai, P["giay_tr_tan"]["Couche"])
@@ -43,7 +41,8 @@ def cong_in(so_to, so_mau, so_mat, so_tay=1):
         return 0
     luot = so_to * so_mat
     if luot < 3000:
-        return so_tay * so_mau * P["cong_in_toi_thieu_1_kem"]
+        bang = P.get("cong_in_toi_thieu_theo_mau") or {}
+        return so_tay * bang.get(str(int(so_mau)), so_mau * P["cong_in_toi_thieu_1_kem"])
     for nguong, rate in P["bac_cong_in"]:
         if luot < nguong:
             return so_tay * so_to * rate * so_mau * so_mat
@@ -83,16 +82,30 @@ class DonHang:
     kts: bool = None                                   # None = tự chọn theo số lượng
 
 
+def nen_in_nhanh(don: DonHang, SL: int) -> bool:
+    """Quy tắc My: dưới 500 tờ và mọi thành phần in lọt khổ 33×60 thì in nhanh."""
+    K = P["don_kts"]
+    tong_to = 0
+    for tp in don.thanh_phan:
+        if not tp.so_mau:
+            continue
+        u = ups(*K["kho_in_nhanh"], tp.trai_w, tp.trai_h)
+        if u == 0:
+            return False
+        tong_to += SL * tp.con_moi_sp / u
+    return 0 < tong_to < K["nguong_to"]
+
+
 def tinh(don: DonHang, SL: int, kts: bool = None):
     K = P["don_kts"]
     if kts is None:
-        kts = don.kts if don.kts is not None else SL < K["nguong_sl"]
+        kts = don.kts if don.kts is not None else nen_in_nhanh(don, SL)
     r = {"SL": SL, "dong": [], "co_dinh": 0.0, "uoc_tinh": list(don.uoc_tinh), "mac_dinh": list(don.mac_dinh), "kts": kts}
     tong = 0.0
     dien_tich_sp = 0.0
     kem = 0
     for tp in don.thanh_phan:
-        k = ((don.kho, don.con, 0) if don.kho and don.con else chon_kho(tp.trai_w, tp.trai_h))
+        k = ((don.kho, don.con, 0) if don.kho and don.con else chon_kho(tp.trai_w, tp.trai_h, [K["kho_in_nhanh"]] if (kts and tp.so_mau) else None))
         if not k:
             r["dong"].append((f"{tp.ten}: khổ trải {tp.trai_w}×{tp.trai_h} vượt khổ giấy", 0))
             continue
@@ -102,7 +115,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         gt = (W * H * tp.gsm * don.gia_giay / 10000) if (don.gia_giay and tp.loai not in ("Chipboard", "Decal")) else gia_to(W, H, tp.loai, tp.gsm)
         tien_giay = so_to * gt
         if kts:
-            tien_in = so_to * tp.so_mat * K["in_kts_to_65x43"] * (W * H) / (65 * 43) if tp.so_mau else 0
+            tien_in = so_to * tp.so_mat * K["in_kts_to_33x60"] if tp.so_mau else 0
         else:
             tien_in = cong_in(so_to, tp.so_mau, tp.so_mat)
             kem += tp.so_mau * tp.so_mat
@@ -225,9 +238,13 @@ def _dung_don(spec: dict) -> DonHang:
         tp = [ThanhPhan("Áo giấy nắp + đáy", giay, gsm, ao_w, ao_h, 2, mau, 1),
               ThanhPhan("Lót ruột trơn", giay, gsm, ao_w, ao_h, 2, 0, 0),
               ThanhPhan("Chipboard nắp + đáy", "Chipboard", 1200, D + 2 * C, R + 2 * C, 2, 0, 0, uoc_tinh=True)]
-        gc = [g for g in gc if not g.startswith("dan")] + ["be", "boi_hop_cung"]
-        return DonHang(ten or "Hộp cứng bồi chipboard", tp, gc, khuon_be=2,
-                       uoc_tinh=["đơn giá hộp cứng chờ My chốt"])
+        gc = [g for g in gc if not g.startswith("dan") and g != "be"] + ["be_hop_cung", "phay_ranh", "dung_hop", "boi_hop_cung"]
+        nap_keo = any(k in kieu for k in ("kéo", "rút", "bao diêm", "diêm", "hộc"))
+        if nap_keo:
+            gc.append("boi_nap_keo")
+        ten_hc = ten or ("Hộp cứng nắp kéo (bao diêm)" if nap_keo else "Hộp cứng âm dương / nắp rời")
+        # 4 khuôn bế: áo nắp, áo đáy, carton nắp, carton đáy (theo My)
+        return DonHang(ten_hc, tp, gc, khuon_be=4, uoc_tinh=["chipboard đ/tờ, phay rãnh, dựng hộp, bồi tay chờ My chốt"])
     if loai == "thiep":
         w, h = (D or 8), (R or 12)
         tp = [ThanhPhan("Thiệp", giay, gsm, w + 0.6, h + 0.6, 1, mau, mat if spec.get("so_mat") else 2)]
@@ -290,7 +307,11 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
              f"= {fmt(r0['co_dinh'] / r0['SL'])} đ/cái ở mức {fmt(r0['SL'])} cái.")
     L.append("🧾 Bóc tách @" + fmt(r0["SL"]) + ": " + "; ".join(f"{t} {fmt(v)}" for t, v in r0["dong"] if v) + ".")
     khac = tinh(don, r0["SL"], kts=not r0["kts"])
-    L.append(f"🔁 Nếu {'in offset' if r0['kts'] else 'in KTS'} ở mức {fmt(r0['SL'])} cái: chi phí {fmt(khac['gia_von'])} đ/cái, bán {fmt(khac['gia_ban_tron'])} đ/cái. Ghi 'in offset' hoặc 'in KTS' trong tin để chọn.")
+    kha_thi = r0["kts"] or all(ups(*P["don_kts"]["kho_in_nhanh"], tp.trai_w, tp.trai_h) for tp in don.thanh_phan if tp.so_mau)
+    if not kha_thi:
+        L.append("🔁 Khổ trải vượt 33×60 cm nên bắt buộc in offset.")
+    else:
+        L.append(f"🔁 Nếu {'in offset' if r0['kts'] else 'in KTS'} ở mức {fmt(r0['SL'])} cái: chi phí {fmt(khac['gia_von'])} đ/cái, bán {fmt(khac['gia_ban_tron'])} đ/cái. Ghi 'in offset' hoặc 'in KTS' trong tin để chọn.")
     if r0["mac_dinh"]:
         L.append("ℹ️ Mặc định đã dùng (khách chưa nói): " + ", ".join(r0["mac_dinh"]) + ".")
     uoc = list(dict.fromkeys(r0["uoc_tinh"]))

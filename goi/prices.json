@@ -3,11 +3,12 @@
   "giay_tr_tan": {
     "Kraft": 18,
     "Duplex": 17,
-    "Couche": 21,
+    "Couche": 18,
     "Couche Matt": 22.5,
     "Bristol": 23,
     "Ivory": 23.5,
-    "Ford": 21
+    "Ford": 21,
+    "Chipboard": 5.3
   },
   "chipboard_gia_to_65x86": 3560,
   "decal_gia_m2": 25000,
@@ -115,11 +116,10 @@
       "san": 300000
     },
     "boi_hop_cung": {
-      "ten": "Bồi + lên hộp cứng (tay)",
-      "don_vi": "con",
-      "gia": 15000,
-      "san": 1500000,
-      "uoc_tinh": true
+      "ten": "Bồi hộp cứng",
+      "don_vi": "m2",
+      "gia": 2200,
+      "san": 300000
     },
     "cat_tp": {
       "ten": "Cắt thành phẩm",
@@ -129,7 +129,7 @@
     "boi_giay": {
       "ten": "Bồi giấy (2 lớp)",
       "don_vi": "m2",
-      "gia": 2000,
+      "gia": 2200,
       "san": 300000
     },
     "cua_so": {
@@ -143,6 +143,32 @@
       "don_vi": "con",
       "gia": 1500,
       "san": 300000
+    },
+    "be_hop_cung": {
+      "ten": "Bế 4 thành phần hộp cứng",
+      "don_vi": "con",
+      "gia": 4000,
+      "san": 600000
+    },
+    "phay_ranh": {
+      "ten": "Phay rãnh chipboard",
+      "don_vi": "con",
+      "gia": 2000,
+      "san": 300000,
+      "uoc_tinh": true
+    },
+    "dung_hop": {
+      "ten": "Dựng hộp",
+      "don_vi": "con",
+      "gia": 3000,
+      "san": 300000,
+      "uoc_tinh": true
+    },
+    "boi_nap_keo": {
+      "ten": "Bồi áo hộc nắp kéo (thợ tay nghề cao, +15k/hộp)",
+      "don_vi": "con",
+      "gia": 15000,
+      "san": 0
     }
   },
   "pct_van_chuyen": 0.05,
@@ -155,9 +181,7 @@
     500
   ],
   "don_kts": {
-    "_ghi_chu": "Đơn số ít in kỹ thuật số, chi phí trọn gói theo lô (BG00874 hộp lạp xưởng 11/10/2026: 90 hộp, chi phí ~3.000k, báo 3.780k = lãi 26%). phi_lo: gia công nào khách yêu cầu thì tính khoản lô tương ứng.",
-    "nguong_sl": 150,
-    "in_kts_to_65x43": 9000,
+    "_ghi_chu": "My 12/10/2026: dưới 500 tờ và khổ trải lọt 33x60cm thì in nhanh; vượt 33x60 bắt buộc offset. In KTS đ/tờ 33x60 suy từ BG00874 (500k/~90 tờ), chưa xác nhận.",
     "tu_sua_bai": 5,
     "khuon": 1000000,
     "phi_lo": {
@@ -197,6 +221,19 @@
         ]
       }
     },
-    "pct_loi_nhuan": 0.26
+    "pct_loi_nhuan": 0.26,
+    "kho_in_nhanh": [
+      33,
+      60
+    ],
+    "nguong_to": 500,
+    "in_kts_to_33x60": 5500
+  },
+  "_hop_cung": "My 12/10/2026: hộp âm dương = 4 thành phần = 4 khuôn bế (áo nắp, áo đáy, carton nắp, carton đáy); công đoạn 4 lần bế + phay rãnh + dựng hộp + bồi hộp. Bồi tính dài×rộng×2.200 đ/m², lô tối thiểu 300k. Nắp kéo (bao diêm): bồi áo hộc cần thợ giỏi, +15k/hộp. Chipboard 2mm tính dài×rộng×định lượng×đơn giá như giấy (đơn giá/tấn chưa cho). Phay rãnh, dựng hộp chưa có đơn giá → ước tính.",
+  "cong_in_toi_thieu_theo_mau": {
+    "1": 600000,
+    "2": 900000,
+    "3": 1050000,
+    "4": 1200000
   }
 }
