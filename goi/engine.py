@@ -108,19 +108,34 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
     dien_tich_sp = 0.0
     kem = 0
     for tp in don.thanh_phan:
-        k = ((don.kho, don.con, 0) if don.kho and don.con else chon_kho(tp.trai_w, tp.trai_h, [K["kho_in_nhanh"]] if (kts and tp.so_mau) else None))
-        if not k:
+        # Chọn khổ theo tổng chi phí giấy + in thấp nhất (bình bài ảo), trừ khi tin đã chỉ định khổ/số con
+        ung_vien = [(don.kho, don.con)] if (don.kho and don.con) else             [((W, H), ups(W, H, tp.trai_w, tp.trai_h)) for W, H in ([K["kho_in_nhanh"]] if (kts and tp.so_mau) else P["kho_giay"])]
+        ung_vien = [(k, u) for k, u in ung_vien if u]
+        if not ung_vien:
             r["dong"].append((f"{tp.ten}: khổ trải {tp.trai_w}×{tp.trai_h} vượt khổ giấy", 0))
             continue
-        (W, H), u, _ = k
-        if don.tu_sua_bai is not None:
-            sua = don.tu_sua_bai
-        elif kts:
-            sua = K["tu_sua_bai"]
-        else:
-            sua = P.get("tu_sua_bai_theo_kho", {}).get(f"{W}x{H}", P["tu_sua_bai"])
-        so_to = SL * tp.con_moi_sp / u * P["hao_hut"] + (sua if tp.so_mau else 10)
-        gt = (W * H * tp.gsm * don.gia_giay / 10000) if (don.gia_giay and tp.loai not in ("Chipboard", "Decal")) else gia_to(W, H, tp.loai, tp.gsm)
+        tot_nhat = None
+        for (W, H), u in ung_vien:
+            if don.tu_sua_bai is not None:
+                sua = don.tu_sua_bai
+            elif kts:
+                sua = K["tu_sua_bai"]
+            else:
+                sua = P.get("tu_sua_bai_theo_kho", {}).get(f"{W}x{H}", P["tu_sua_bai"])
+            so_to = SL * tp.con_moi_sp / u * P["hao_hut"] + (sua if tp.so_mau else 10)
+            gt = (W * H * tp.gsm * don.gia_giay / 10000) if (don.gia_giay and tp.loai not in ("Chipboard", "Decal")) else gia_to(W, H, tp.loai, tp.gsm)
+            if kts:
+                tien_in = so_to * tp.so_mat * K["in_kts_to_33x60"] if tp.so_mau else 0
+            else:
+                tien_in = cong_in(so_to, tp.so_mau, tp.so_mat)
+            tong_tp = so_to * gt + tien_in
+            if tot_nhat is None or tong_tp < tot_nhat[0]:
+                tot_nhat = (tong_tp, W, H, u, so_to, gt, tien_in)
+        _, W, H, u, so_to, gt, tien_in = tot_nhat
+        if not kts:
+            kem += tp.so_mau * tp.so_mat
+            if tp.so_mau and so_to * tp.so_mat < 3000:
+                r["co_dinh"] += tien_in
         tien_giay = so_to * gt
         if kts:
             tien_in = so_to * tp.so_mat * K["in_kts_to_33x60"] if tp.so_mau else 0
@@ -336,6 +351,7 @@ if __name__ == "__main__":
     # Kỳ vọng: giấy 2.007.369 · công in 1.200.000 · CTP 440.000
     P["giay_tr_tan"]["Ivory"] = 18
     P["tu_sua_bai"] = 300
+    P["tu_sua_bai_theo_kho"] = {"65x43": 300}
     P["kho_giay"] = [[65, 43]]
     r = tinh(DonHang("Đối chiếu", [ThanhPhan("Hộp giấy", "Ivory", 300, 40, 60, 1, 4, 1)], [], khuon_be=0), 1000)
     for d in r["dong"]:
