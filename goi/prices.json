@@ -10,6 +10,7 @@
   "hao_hut": 1.03,
   "tu_sua_bai": 100,
   "khuon_be": 500000,
+  "proof_toi_thieu": 150000,
   "gia_cong": {
     "can_mo":     {"ten": "Cán màng mờ",   "don_vi": "m2",  "gia": 2200, "san": 300000},
     "can_bong":   {"ten": "Cán màng bóng", "don_vi": "m2",  "gia": 2000, "san": 300000},

@@ -70,6 +70,15 @@ class DonHang:
     gia_cong: list = field(default_factory=list)   # key trong prices.gia_cong
     khuon_be: int = 1
     uoc_tinh: list = field(default_factory=list)
+    # tuỳ chỉnh theo tin nhắn (None = dùng prices.json)
+    gia_giay: float = None
+    tu_sua_bai: int = None
+    kho: tuple = None
+    con: int = None
+    pct_ln: float = None
+    khuon_be_tien: float = None
+    proof: bool = True
+    gc_tuy_chinh: list = field(default_factory=list)   # [(tên, đ/cái)]
 
 
 def tinh(don: DonHang, SL: int):
@@ -78,19 +87,21 @@ def tinh(don: DonHang, SL: int):
     dien_tich_sp = 0.0
     kem = 0
     for tp in don.thanh_phan:
-        k = chon_kho(tp.trai_w, tp.trai_h)
+        k = ((don.kho, don.con, 0) if don.kho and don.con else chon_kho(tp.trai_w, tp.trai_h))
         if not k:
             r["dong"].append((f"{tp.ten}: khổ trải {tp.trai_w}×{tp.trai_h} vượt khổ giấy", 0))
             continue
         (W, H), u, _ = k
-        so_to = SL * tp.con_moi_sp / u * P["hao_hut"] + (P["tu_sua_bai"] if tp.so_mau else 10)
-        tien_giay = so_to * gia_to(W, H, tp.loai, tp.gsm)
+        sua = don.tu_sua_bai if don.tu_sua_bai is not None else P["tu_sua_bai"]
+        so_to = SL * tp.con_moi_sp / u * P["hao_hut"] + (sua if tp.so_mau else 10)
+        gt = (W * H * tp.gsm * don.gia_giay / 10000) if (don.gia_giay and tp.loai not in ("Chipboard", "Decal")) else gia_to(W, H, tp.loai, tp.gsm)
+        tien_giay = so_to * gt
         tien_in = cong_in(so_to, tp.so_mau, tp.so_mat)
         kem += tp.so_mau * tp.so_mat
         if tp.so_mau and so_to * tp.so_mat < 3000:
             r["co_dinh"] += tien_in
         dien_tich_sp += tp.trai_w * tp.trai_h * tp.con_moi_sp / 10000
-        r["dong"].append((f"{tp.ten} {tp.loai} {tp.gsm}g ({u} con/tờ {W}×{H}, {so_to:,.0f} tờ)", tien_giay))
+        r["dong"].append((f"{tp.ten} {tp.loai} {tp.gsm}g ({u} con/tờ {W}×{H}, {fmt(so_to)} tờ)", tien_giay))
         if tien_in:
             r["dong"].append((f"Công in {tp.so_mau} màu {tp.so_mat} mặt {tp.ten.lower()}", tien_in))
         tong += tien_giay + tien_in
@@ -101,6 +112,13 @@ def tinh(don: DonHang, SL: int):
         r["dong"].append((f"Kẽm CTP {kem} bản", ctp))
         tong += ctp
         r["co_dinh"] += ctp
+        if don.proof and P.get("proof_toi_thieu"):
+            r["dong"].append(("Proof", P["proof_toi_thieu"]))
+            tong += P["proof_toi_thieu"]
+            r["co_dinh"] += P["proof_toi_thieu"]
+    for ten, gia in don.gc_tuy_chinh:
+        r["dong"].append((ten, SL * gia))
+        tong += SL * gia
     for key in don.gia_cong:
         g = P["gia_cong"].get(key)
         if not g:
@@ -120,7 +138,7 @@ def tinh(don: DonHang, SL: int):
         if g.get("uoc_tinh"):
             r["uoc_tinh"].append(g["ten"])
     if don.khuon_be:
-        kb = don.khuon_be * P["khuon_be"]
+        kb = don.khuon_be_tien if don.khuon_be_tien is not None else don.khuon_be * P["khuon_be"]
         r["dong"].append((f"Khuôn bế ×{don.khuon_be}", kb))
         tong += kb
         r["co_dinh"] += kb
@@ -128,7 +146,9 @@ def tinh(don: DonHang, SL: int):
     r["van_chuyen"] = tong * P["pct_van_chuyen"]
     r["chi_phi"] = tong + r["van_chuyen"]
     r["gia_von"] = r["chi_phi"] / SL
-    r["gia_ban"] = r["chi_phi"] * (1 + P["pct_loi_nhuan"]) / SL
+    ln = don.pct_ln if don.pct_ln is not None else P["pct_loi_nhuan"]
+    r["pct_ln"] = ln
+    r["gia_ban"] = r["chi_phi"] * (1 + ln) / SL
     lt = P["lam_tron"]
     r["gia_ban_tron"] = math.ceil(r["gia_ban"] / lt) * lt
     return r
@@ -139,6 +159,25 @@ MAC_DINH_GSM = {"hop_gap": 300, "thiep": 300, "tui_giay": 250, "hop_cung": 150, 
 
 
 def dung_don(spec: dict) -> DonHang:
+    don = _dung_don(spec)
+    don.gia_giay = spec.get("gia_giay_tr_tan") or None
+    don.tu_sua_bai = spec.get("tu_sua_bai")
+    if spec.get("kho_giay") and spec.get("so_con_to"):
+        W, H = (int(x) for x in spec["kho_giay"].split("x"))
+        don.kho, don.con = (W, H), spec["so_con_to"]
+    don.pct_ln = spec.get("pct_loi_nhuan")
+    if spec.get("khuon_be_nghin") is not None:
+        don.khuon_be_tien = spec["khuon_be_nghin"] * 1000
+    don.proof = not spec.get("khong_proof")
+    don.gc_tuy_chinh = [(g["ten"], g["gia_moi_cai"]) for g in (spec.get("gia_cong_tuy_chinh") or [])]
+    if don.gc_tuy_chinh:
+        # gia công đã có đơn giá riêng thì bỏ bản mặc định cùng tên
+        ten_tc = " ".join(t.lower() for t, _ in don.gc_tuy_chinh)
+        don.gia_cong = [g for g in don.gia_cong if P["gia_cong"][g]["ten"].split()[0].lower() not in ten_tc]
+    return don
+
+
+def _dung_don(spec: dict) -> DonHang:
     loai = spec.get("loai") or "hop_gap"
     D, R, C = spec.get("dai") or 0, spec.get("rong") or 0, spec.get("cao") or 0
     giay = spec.get("giay") or ("Couche" if loai in ("hop_cung", "tui_giay") else "Ivory")
@@ -196,18 +235,22 @@ def fmt(n):
     return f"{n:,.0f}".replace(",", ".")
 
 
+def fmt_vn(n):
+    return f"{n:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+
+
 def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     kt = " × ".join(str(x) for x in (spec.get("dai"), spec.get("rong"), spec.get("cao")) if x)
     L = [f"📦 {don.ten}" + (f" {kt} cm" if kt else "")]
     L.append("• " + "; ".join(f"{tp.ten}: {tp.loai} {tp.gsm}g" for tp in don.thanh_phan))
-    gc_ten = [P["gia_cong"][g]["ten"] for g in don.gia_cong if g in P["gia_cong"]]
+    gc_ten = [P["gia_cong"][g]["ten"] for g in don.gia_cong if g in P["gia_cong"]] + [f"{t} {fmt(g)}đ" for t, g in don.gc_tuy_chinh]
     if gc_ten:
         L.append("• Gia công: " + ", ".join(gc_ten))
     L.append("")
-    L.append(f"💰 BÁO GIÁ (chưa VAT {int(P['vat'] * 100)}%, đã gồm lợi nhuận {int(P['pct_loi_nhuan'] * 100)}%)")
+    L.append(f"💰 BÁO GIÁ (chưa VAT {int(P['vat'] * 100)}%, đã gồm lợi nhuận {int(ket_qua[0]['pct_ln'] * 100)}%)")
     for r in ket_qua:
         L.append(f"🔹 {fmt(r['SL'])} cái: {fmt(r['gia_ban_tron'])} đ/cái · tổng {fmt(r['gia_ban_tron'] * r['SL'])} đ "
-                 f"(giá vốn {fmt(r['gia_von'])} đ/cái)")
+                 f"(chi phí {fmt(r['chi_phi'])} đ = {fmt_vn(r['gia_von'])} đ/cái)")
     r0 = ket_qua[0]
     L.append("")
     L.append(f"📌 Chi phí cố định (kẽm, công in tối thiểu, khuôn): {fmt(r0['co_dinh'])} đ "

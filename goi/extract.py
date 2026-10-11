@@ -10,6 +10,11 @@ MODEL = "claude-opus-5-5"
 GiaCong = Literal["can_mo", "can_bong", "ep_kim", "dap_noi", "uv_dinh_vi", "be", "dan_may", "dan_tay", "dan_tui"]
 
 
+class GiaCongTuyChinh(BaseModel):
+    ten: str = Field(description="Tên gia công khách/My nêu kèm đơn giá, ví dụ 'Dán dây'")
+    gia_moi_cai: float = Field(description="đ/cái")
+
+
 class Spec(BaseModel):
     san_pham: str = Field(description="Tên ngắn sản phẩm, ví dụ 'Hộp âm dương 30×25×5'")
     loai: Optional[Literal["hop_gap", "hop_cung", "tui_giay", "thiep", "tem_decal"]] = Field(
@@ -28,6 +33,14 @@ class Spec(BaseModel):
     so_mat: Optional[int] = Field(description="1 hoặc 2 mặt in; null nếu không nói")
     gia_cong: List[GiaCong] = Field(description="cán mờ→can_mo, cán bóng→can_bong, ép kim/ép nhũ→ep_kim, dập nổi/chìm→dap_noi, UV định vị→uv_dinh_vi, bế→be, dán máy→dan_may, dán tay→dan_tay")
     thieu: List[str] = Field(description="Các thông tin bắt buộc còn thiếu để báo giá: loại sản phẩm, kích thước, số lượng. Giấy/màu/gia công thiếu thì dùng mặc định, không liệt kê.")
+    gia_giay_tr_tan: Optional[float] = Field(description="Giá giấy triệu đ/tấn nếu tin nói rõ (vd '18tr/tấn' → 18); null nếu không nói")
+    tu_sua_bai: Optional[int] = Field(description="Số tờ sửa bài nếu tin nói rõ; null nếu không")
+    kho_giay: Optional[Literal["65x43", "65x86", "79x109"]] = Field(description="Khổ giấy in nếu tin nói rõ")
+    so_con_to: Optional[int] = Field(description="Số con/tờ nếu tin nói rõ")
+    pct_loi_nhuan: Optional[float] = Field(description="Lợi nhuận dạng thập phân nếu tin nói rõ (vd 'lợi nhuận 0' → 0, '38%' → 0.38); null nếu không")
+    khuon_be_nghin: Optional[int] = Field(description="Tiền khuôn bế nghìn đồng nếu tin nói rõ (vd 'khuôn 500k' → 500)")
+    khong_proof: bool = Field(description="true nếu tin nói 'không proof'/'bỏ proof'")
+    gia_cong_tuy_chinh: List[GiaCongTuyChinh] = Field(description="Các gia công có kèm đơn giá đ/cái trong tin (vd 'bế 1401đ/cái', 'dán dây 1500'). Gia công nào đã có ở đây thì KHÔNG đưa vào gia_cong nữa.")
     cau_hoi: str = Field(description="Nếu 'thieu' không rỗng: 1 câu hỏi tiếng Việt ngắn, thân thiện, hỏi đúng các mục thiếu. Nếu không thiếu: chuỗi rỗng.")
 
 
