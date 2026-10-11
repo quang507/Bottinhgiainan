@@ -32,6 +32,9 @@ def gia_to(W, H, loai, gsm):
     if loai == "Decal":
         return W * H / 10000 * P["decal_gia_m2"]
     tr_tan = P["giay_tr_tan"].get(loai, P["giay_tr_tan"]["Couche"])
+    m = P.get("phu_phi_giay_mong")
+    if m and loai != "Chipboard" and gsm < m["duoi_gsm"]:
+        tr_tan *= 1 + m["pct"]
     return W * H * gsm * tr_tan / 10000
 
 

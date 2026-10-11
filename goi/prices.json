@@ -3,10 +3,10 @@
   "giay_tr_tan": {
     "Kraft": 18,
     "Duplex": 17,
-    "Couche": 18,
-    "Couche Matt": 22.5,
-    "Bristol": 23,
-    "Ivory": 23.5,
+    "Couche": 17,
+    "Couche Matt": 18,
+    "Bristol": 19,
+    "Ivory": 17,
     "Ford": 21,
     "Chipboard": 5.3
   },
@@ -235,5 +235,10 @@
     "2": 900000,
     "3": 1050000,
     "4": 1200000
+  },
+  "phu_phi_giay_mong": {
+    "_ghi_chu": "My 12/10/2026: giấy càng mỏng giá càng cao (hơn 10%). Áp +10% cho định lượng dưới ngưỡng.",
+    "duoi_gsm": 200,
+    "pct": 0.1
   }
 }
