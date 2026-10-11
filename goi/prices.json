@@ -1,32 +1,202 @@
 {
   "_ghi_chu": "Đơn giá xưởng GÓI. Giấy: triệu đồng/tấn (18 = 18tr/tấn). Sửa file này để đổi giá, không cần sửa code. Khởi động lại bot sau khi sửa.",
-  "giay_tr_tan": {"Kraft": 18, "Duplex": 17, "Couche": 21, "Couche Matt": 22.5, "Bristol": 23, "Ivory": 23.5, "Ford": 21},
+  "giay_tr_tan": {
+    "Kraft": 18,
+    "Duplex": 17,
+    "Couche": 21,
+    "Couche Matt": 22.5,
+    "Bristol": 23,
+    "Ivory": 23.5,
+    "Ford": 21
+  },
   "chipboard_gia_to_65x86": 3560,
   "decal_gia_m2": 25000,
-  "kho_giay": [[65, 43], [65, 86], [79, 109]],
+  "kho_giay": [
+    [
+      65,
+      43
+    ],
+    [
+      65,
+      86
+    ],
+    [
+      79,
+      109
+    ]
+  ],
   "gia_kem": 110000,
   "cong_in_toi_thieu_1_kem": 300000,
-  "bac_cong_in": [[4000, 130], [5000, 120], [6000, 110], [10000, 90], [15000, 80], [999999999, 60]],
+  "bac_cong_in": [
+    [
+      4000,
+      130
+    ],
+    [
+      5000,
+      120
+    ],
+    [
+      6000,
+      110
+    ],
+    [
+      10000,
+      90
+    ],
+    [
+      15000,
+      80
+    ],
+    [
+      999999999,
+      60
+    ]
+  ],
   "hao_hut": 1.03,
   "tu_sua_bai": 100,
   "khuon_be": 500000,
   "proof_toi_thieu": 150000,
   "gia_cong": {
-    "can_mo":     {"ten": "Cán màng mờ",   "don_vi": "m2",  "gia": 2200, "san": 300000},
-    "can_bong":   {"ten": "Cán màng bóng", "don_vi": "m2",  "gia": 2000, "san": 300000},
-    "ep_kim":     {"ten": "Ép kim",        "don_vi": "con", "gia": 720,  "san": 300000, "khuon": 300000},
-    "dap_noi":    {"ten": "Dập nổi",       "don_vi": "con", "gia": 1344, "san": 300000, "khuon": 300000},
-    "uv_dinh_vi": {"ten": "UV định vị",    "don_vi": "m2",  "gia": 1500, "san": 300000},
-    "be":         {"ten": "Bế thành phẩm", "don_vi": "con", "gia": 1000, "san": 300000},
-    "dan_may":    {"ten": "Dán hộp (máy)", "don_vi": "con", "gia": 150,  "san": 150000},
-    "dan_tay":    {"ten": "Dán tay",       "don_vi": "con", "gia": 500,  "san": 200000},
-    "dan_tui":    {"ten": "Dán túi + quai","don_vi": "con", "gia": 2300, "san": 300000},
-    "boi_hop_cung": {"ten": "Bồi + lên hộp cứng (tay)", "don_vi": "con", "gia": 15000, "san": 1500000, "uoc_tinh": true},
-    "cat_tp":     {"ten": "Cắt thành phẩm","don_vi": "lo",  "gia": 100000}
+    "can_mo": {
+      "ten": "Cán màng mờ",
+      "don_vi": "m2",
+      "gia": 2200,
+      "san": 300000
+    },
+    "can_bong": {
+      "ten": "Cán màng bóng",
+      "don_vi": "m2",
+      "gia": 2000,
+      "san": 300000
+    },
+    "ep_kim": {
+      "ten": "Ép kim",
+      "don_vi": "con",
+      "gia": 720,
+      "san": 300000,
+      "khuon": 300000
+    },
+    "dap_noi": {
+      "ten": "Dập nổi",
+      "don_vi": "con",
+      "gia": 1344,
+      "san": 300000,
+      "khuon": 300000
+    },
+    "uv_dinh_vi": {
+      "ten": "UV định vị",
+      "don_vi": "m2",
+      "gia": 1500,
+      "san": 300000
+    },
+    "be": {
+      "ten": "Bế thành phẩm",
+      "don_vi": "con",
+      "gia": 1000,
+      "san": 300000
+    },
+    "dan_may": {
+      "ten": "Dán hộp (máy)",
+      "don_vi": "con",
+      "gia": 150,
+      "san": 150000
+    },
+    "dan_tay": {
+      "ten": "Dán tay",
+      "don_vi": "con",
+      "gia": 500,
+      "san": 200000
+    },
+    "dan_tui": {
+      "ten": "Dán túi + quai",
+      "don_vi": "con",
+      "gia": 2300,
+      "san": 300000
+    },
+    "boi_hop_cung": {
+      "ten": "Bồi + lên hộp cứng (tay)",
+      "don_vi": "con",
+      "gia": 15000,
+      "san": 1500000,
+      "uoc_tinh": true
+    },
+    "cat_tp": {
+      "ten": "Cắt thành phẩm",
+      "don_vi": "lo",
+      "gia": 100000
+    },
+    "boi_giay": {
+      "ten": "Bồi giấy (2 lớp)",
+      "don_vi": "m2",
+      "gia": 2000,
+      "san": 300000
+    },
+    "cua_so": {
+      "ten": "Dán support cửa sổ",
+      "don_vi": "con",
+      "gia": 1000,
+      "san": 300000
+    },
+    "xo_day": {
+      "ten": "Xỏ dây",
+      "don_vi": "con",
+      "gia": 1500,
+      "san": 300000
+    }
   },
   "pct_van_chuyen": 0.05,
   "pct_loi_nhuan": 0.35,
   "vat": 0.08,
   "lam_tron": 1000,
-  "bac_so_luong_mac_dinh": [100, 300, 500]
+  "bac_so_luong_mac_dinh": [
+    100,
+    300,
+    500
+  ],
+  "don_kts": {
+    "_ghi_chu": "Đơn số ít in kỹ thuật số, chi phí trọn gói theo lô (BG00874 hộp lạp xưởng 11/10/2026: 90 hộp, chi phí ~3.000k, báo 3.780k = lãi 26%). phi_lo: gia công nào khách yêu cầu thì tính khoản lô tương ứng.",
+    "nguong_sl": 150,
+    "in_kts_to_65x43": 9000,
+    "tu_sua_bai": 5,
+    "khuon": 1000000,
+    "phi_lo": {
+      "Cán màng (lô)": {
+        "gia": 300000,
+        "thay_cho": [
+          "can_mo",
+          "can_bong"
+        ]
+      },
+      "Lên khuôn + bế (lô)": {
+        "gia": 300000,
+        "thay_cho": [
+          "be"
+        ]
+      },
+      "Bồi (lô)": {
+        "gia": 300000,
+        "thay_cho": [
+          "boi_giay",
+          "boi_hop_cung"
+        ]
+      },
+      "Dán + đẩy (lô)": {
+        "gia": 300000,
+        "thay_cho": [
+          "dan_may",
+          "dan_tay",
+          "dan_tui"
+        ]
+      },
+      "Support cửa sổ / dây (lô)": {
+        "gia": 300000,
+        "thay_cho": [
+          "cua_so",
+          "xo_day"
+        ]
+      }
+    },
+    "pct_loi_nhuan": 0.26
+  }
 }
