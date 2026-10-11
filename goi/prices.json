@@ -365,5 +365,12 @@
       ]
     ]
   },
-  "_van_chuyen": "My 12/10/2026: 5% bao bì + vận chuyển là giá nội bộ; chưa có chính sách vận chuyển cho khách → báo giá ghi 'chưa gồm vận chuyển'."
+  "_van_chuyen": "My 12/10/2026: 5% bao bì + vận chuyển là giá nội bộ; chưa có chính sách vận chuyển cho khách → báo giá ghi 'chưa gồm vận chuyển'.",
+  "chinh_sach": {
+    "_ghi_chu": "My 12/10/2026, câu 16-18. Hiện cuối mỗi tin báo giá.",
+    "dong": [
+      "Giá chưa gồm VAT 8%. Khuôn nằm trong chi phí cố định, không tặng; ưu đãi là thiết kế miễn phí, hậu mãi, đơn lặp lại.",
+      "Thời gian: sản phẩm làm riêng 7–10 ngày sau duyệt file, mẫu 3–7 ngày; sản phẩm có sẵn 2–3 ngày sau chốt file logo; trên 5.000 sp thỏa thuận. Chưa tính thời gian vận chuyển."
+    ]
+  }
 }

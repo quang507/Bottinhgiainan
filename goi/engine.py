@@ -462,6 +462,8 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
         L.append("⚠️ Ước tính: " + ", ".join(uoc) + ".")
     else:
         L.append("✅ Đủ thông số, không có khoản ước tính.")
+    for d in P.get("chinh_sach", {}).get("dong", []):
+        L.append("📎 " + d)
     msg = "\n".join(L)
     return msg if len(msg) <= 1990 else msg[:1985] + "…"
 
