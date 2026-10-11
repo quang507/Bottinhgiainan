@@ -32,6 +32,7 @@ class Spec(BaseModel):
     so_mau: Optional[int] = Field(description="4 nếu 'in màu/4 màu/offset màu'; 1 nếu 1 màu; 0 nếu không in; null nếu không nói")
     so_mat: Optional[int] = Field(description="1 hoặc 2 mặt in; null nếu không nói")
     gia_cong: List[GiaCong] = Field(description="cán mờ→can_mo, cán bóng→can_bong, ép kim/ép nhũ→ep_kim, dập nổi/chìm→dap_noi, UV định vị→uv_dinh_vi, bế→be, dán máy→dan_may, dán tay→dan_tay, bồi giấy/bồi 2 lớp→boi_giay, cửa sổ/support cửa sổ→cua_so, xỏ dây→xo_day")
+    kieu_in_2_mat: Optional[Literal["AB", "tu_tro", "tro_nhip"]] = Field(description="Chỉ khi in 2 mặt và tin nói rõ: bình AB/sheet-wise → AB; tự trở/work and turn → tu_tro; trở nhíp/work and tumble → tro_nhip; null nếu không nói")
     in_kts: Optional[bool] = Field(description="true nếu tin nói in KTS / kỹ thuật số / in nhanh; false nếu nói rõ in offset; null nếu không nói")
     thieu: List[str] = Field(description="Các thông tin bắt buộc còn thiếu để báo giá: loại sản phẩm, kích thước, số lượng. Giấy/màu/gia công thiếu thì dùng mặc định, không liệt kê.")
     gia_giay_tr_tan: Optional[float] = Field(description="Giá giấy triệu đ/tấn nếu tin nói rõ (vd '18tr/tấn' → 18); null nếu không nói")

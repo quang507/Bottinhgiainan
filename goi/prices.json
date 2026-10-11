@@ -246,5 +246,15 @@
     "65x43": 100,
     "65x86": 200,
     "79x109": 300
+  },
+  "khuon_be_theo_kich_thuoc": {
+    "_ghi_chu": "My 12/10/2026: khuôn bế 150k-600k tùy kích thước, full khổ 600k; khuôn túi và hộp carton cao nhất.",
+    "toi_thieu": 150000,
+    "toi_da": 600000,
+    "full_kho_cm2": 5590,
+    "loai_cao_nhat": [
+      "tui_giay",
+      "thung_carton"
+    ]
   }
 }
