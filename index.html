@@ -1,0 +1,368 @@
+<title>Tính giá GÓI</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: một cột nhập liệu bên trái (giống các ô vàng trong Excel), bảng kết quả bên phải; xếp dọc trên điện thoại. */
+:root{
+  --bg:#f3f4f2; --panel:#ffffff; --fg:#1b1f1e; --muted:#5e6663; --line:#d8dcd9;
+  --accent:#0d6b63; --accent-fg:#ffffff; --input:#fff9db; --input-line:#e2cf6a;
+  --ok:#1f7a3a; --warn:#9a5a00;
+  --font-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-num:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141817; --panel:#1d2321; --fg:#e8ecea; --muted:#9aa49f; --line:#303836;
+  --accent:#3fb3a8; --accent-fg:#0b1412; --input:#2a2a1c; --input-line:#6b6230; --ok:#5fcf84; --warn:#e3a84a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141817; --panel:#1d2321; --fg:#e8ecea; --muted:#9aa49f; --line:#303836;
+  --accent:#3fb3a8; --accent-fg:#0b1412; --input:#2a2a1c; --input-line:#6b6230; --ok:#5fcf84; --warn:#e3a84a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:20px 40px;max-width:1280px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px;text-wrap:balance}
+h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.sub{color:var(--muted);margin:0 0 18px;max-width:70ch}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.stack{display:grid;gap:14px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px 10px}
+label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+input,select{font:inherit;font-size:14px;color:var(--fg);background:var(--input);border:1px solid var(--input-line);border-radius:6px;padding:6px 8px;width:100%;min-width:0}
+input[type=number]{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input.ro{background:transparent;border-color:var(--line);color:var(--muted)}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 10px}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+button.small{font-size:12px;padding:3px 8px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.comp{border:1px dashed var(--line);border-radius:8px;padding:10px;display:grid;gap:8px}
+.comp header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.comp header b{font-size:13px}
+.hint{font-size:12px;color:var(--muted)}
+.hint b{color:var(--fg)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:500}
+td:first-child,th:first-child{text-align:left;white-space:normal}
+td.num{font-family:var(--font-num);font-size:13px}
+tr.total td{font-weight:700;border-top:2px solid var(--fg)}
+tr.sell td{background:color-mix(in srgb,var(--accent) 12%,transparent);font-weight:700;font-size:15px}
+.gc{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:6px;align-items:end}
+textarea{font:inherit;font-size:13px;width:100%;min-height:180px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+.pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);font-weight:600}
+.flash{color:var(--ok);font-size:12px;min-height:1em}
+details summary{cursor:pointer;color:var(--muted);font-size:12px}
+.note{font-size:12px;color:var(--muted);border-left:3px solid var(--accent);padding-left:10px;margin-top:8px}
+</style>
+
+<h1>Tính giá GÓI</h1>
+<p class="sub">Cùng công thức với <b>Báo giá My.xlsx</b> (sheet Đơn SLL / Đơn số ít). Nhập các ô vàng, kết quả tính lại tức thì. Thêm phần gợi ý số con/tờ cho khổ giấy công nghiệp 65×43, 65×86, 79×109.</p>
+
+<div class="toolbar">
+  <button class="primary" id="btnPresetSLL">Nạp mẫu Excel (Đơn SLL, 1.000 hộp)</button>
+  <button id="btnPresetUyen">Nạp mẫu hộp âm dương 30×12×7 (ước tính)</button>
+  <button id="btnReset">Xoá trắng</button>
+  <span class="flash" id="flash"></span>
+</div>
+
+<div class="grid">
+<div class="stack">
+
+  <section class="panel">
+    <h2>Đơn hàng</h2>
+    <div class="row">
+      <label>Tên sản phẩm<input id="ten" type="text" value=""></label>
+      <label>Số lượng (nhiều bậc, cách nhau dấu phẩy)<input id="sl" type="text" value="1000"></label>
+      <label>Loại đơn (bậc công in &amp; proof)
+        <select id="sheet"><option value="SLL">Đơn SLL</option><option value="it">Đơn số ít</option></select></label>
+      <label>Tỷ giá USD<input id="usd" type="number" value="19100"></label>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label>Kích thước SP: Dài (cm)<input id="pd" type="number" step="0.1" value="26"></label>
+      <label>Rộng (cm)<input id="pr" type="number" step="0.1" value="17"></label>
+      <label>Dày / Cao (cm)<input id="pday" type="number" step="0.1" value="8"></label>
+      <label>Proof: tỉ lệ in (0,1 = 10%, trống = không)<input id="proof" type="number" step="0.01" value="0.1"></label>
+    </div>
+    <p class="hint">Proof = Dài × Rộng × Dày × tỉ lệ × 100 (Đơn SLL: tối thiểu 150.000 đ).</p>
+  </section>
+
+  <section class="panel">
+    <h2>Thành phần giấy (cột A–F trong Excel)</h2>
+    <div id="comps" class="stack"></div>
+    <div style="margin-top:10px"><button id="btnAddComp" class="small">+ Thêm thành phần (áo, đáy, lót, chipboard…)</button></div>
+    <p class="hint">Giá tờ = Dài × Rộng × định lượng × giá/gam ÷ 10.000. Giá/gam = giá tấn ÷ 1.000.000 (18 tr/tấn → 18). Decal, giấy sóng: định lượng 1, giá m². Giấy mỹ thuật: nhập thẳng giá tờ. Met: cộng 3.500 đ/m².</p>
+  </section>
+
+  <section class="panel">
+    <h2>Gia công thành phẩm (đ/cái)</h2>
+    <div id="gcs" class="stack"></div>
+    <div style="margin-top:10px"><button id="btnAddGC" class="small">+ Thêm gia công</button></div>
+    <p class="hint">Cột "sàn" là mức tối thiểu cả đơn (để 0 = y như Excel). Xưởng bế thường có sàn 300.000 đ.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Chi phí cố định &amp; tỷ lệ</h2>
+    <div class="row">
+      <label>Khuôn bế (nghìn đ)<input id="khuon" type="number" value="500"></label>
+      <label>CTP: giá 1 kẽm (đ)<input id="giakem" type="number" value="110000"></label>
+      <label>Xuất kẽm<select id="ctp"><option value="1">Có (CTP)</option><option value="0">Không</option></select></label>
+      <label>Công in tối thiểu / kẽm (đ)<input id="giain1kem" type="number" value="300000"></label>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label>Phí quản lý %<input id="pql" type="number" step="0.01" value="0"></label>
+      <label>Bao bì + vận chuyển %<input id="pvc" type="number" step="0.01" value="5"></label>
+      <label>Chi phí khác %<input id="pkhac" type="number" step="0.01" value="0"></label>
+      <label>Lợi nhuận %<input id="pln" type="number" step="0.01" value="0"></label>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label>Hoa hồng NVKD %<input id="phhnv" type="number" step="0.01" value="0"></label>
+      <label>Thuế HH NVKD %<input id="pthnv" type="number" step="0.01" value="0"></label>
+      <label>Hoa hồng KH %<input id="phhkh" type="number" step="0.01" value="0"></label>
+      <label>Thuế HH KH %<input id="pthkh" type="number" step="0.01" value="0"></label>
+    </div>
+    <p class="hint">Đơn giá bán = (Chi phí + HH NVKD + thuế + Lợi nhuận) ÷ (1 − HH KH − HH KH × thuế KH) ÷ SL. Lợi nhuận tính trên tổng chi phí (ô B51).</p>
+  </section>
+
+</div>
+<div class="stack">
+
+  <section class="panel">
+    <h2>Kết quả theo bậc số lượng</h2>
+    <div class="tablewrap"><table id="out"></table></div>
+    <p class="note" id="checknote"></p>
+  </section>
+
+  <section class="panel">
+    <h2>Dòng báo giá gửi khách</h2>
+    <div class="row" style="margin-bottom:8px">
+      <label>Làm tròn đơn giá lên bội số (đ)<input id="round" type="number" value="1000"></label>
+      <label>Thuế GTGT %<input id="vat" type="number" value="8"></label>
+    </div>
+    <textarea id="quote" readonly></textarea>
+    <div class="toolbar" style="margin-top:8px"><button class="primary" id="btnCopy">Sao chép</button><span class="flash" id="flash2"></span></div>
+  </section>
+
+  <section class="panel">
+    <details><summary>Bảng tra nhanh (từ file Excel &amp; bảng thông tin báo giá)</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Giấy</th><th>tr/tấn</th><th>Gia công</th><th>đ/m²</th></tr>
+      <tr><td>Kraft</td><td class="num">18</td><td>Cán màng bóng</td><td class="num">2.000</td></tr>
+      <tr><td>Duplex</td><td class="num">17</td><td>Cán màng mờ</td><td class="num">2.200</td></tr>
+      <tr><td>Couche / Ford</td><td class="num">21</td><td>UV / waterbase</td><td class="num">1.500</td></tr>
+      <tr><td>Couche Matt</td><td class="num">22,5</td><td>Varnish bìa</td><td class="num">1.500</td></tr>
+      <tr><td>Bristol</td><td class="num">23</td><td>Bồi nguyên tờ</td><td class="num">2.000</td></tr>
+      <tr><td>Ivory</td><td class="num">23,5</td><td>Bồi cuốn mép</td><td class="num">8.000</td></tr>
+      <tr><td>Chipboard 1200–1600</td><td class="num">16,5–17</td><td>Kẽm CTP</td><td class="num">110.000/kẽm</td></tr>
+    </table></div>
+    <p class="hint">Bậc công in theo lượt (tờ × mặt): &lt;3.000 lượt tính 300.000 đ/kẽm; 3–4k: 130; 4–5k: 120; 5–6k: 110; 6–10k: 90; 10–15k: 80; trên 15k: 60 (Đơn SLL) / 70 (Đơn số ít) đ/lượt/màu. Cộng thêm 3% hao hụt + tờ sửa bài.</p>
+    </details>
+  </section>
+
+</div>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const fmt = n => (Math.round(n)).toLocaleString('vi-VN');
+const fmt1 = n => n.toLocaleString('vi-VN',{maximumFractionDigits:1});
+const num = v => { const x = parseFloat(String(v).replace(',','.')); return isNaN(x)?0:x; };
+const KHO = {'65x43':[65,43],'65x86':[65,86],'79x109':[79,109]};
+const LOAI = ['Couche','Couche Matt','Bristol','Ivory','Duplex','Duplex 2S','Fort','Pelure','Giấy Mỹ thuật','Decal','Sóng E','Cacbonless','Met','Kraft','Chipboard'];
+
+let comps = [], gcs = [];
+
+function ups(W,H,w,h){ if(!w||!h) return 0; const a=Math.floor(W/w)*Math.floor(H/h), b=Math.floor(W/h)*Math.floor(H/w); return Math.max(a,b); }
+
+function compHTML(c,i){
+  const opts = LOAI.map(l=>`<option ${l===c.loai?'selected':''}>${l}</option>`).join('');
+  const kho = Object.keys(KHO).map(k=>`<option ${k===c.kho?'selected':''}>${k}</option>`).join('') + `<option value="custom" ${c.kho==='custom'?'selected':''}>Khác</option>`;
+  return `<div class="comp" data-i="${i}">
+    <header><b>(${String.fromCharCode(65+i)}) <input data-k="ten" type="text" value="${c.ten}" style="width:220px;display:inline-block"></b>
+      <button class="small" data-del="${i}">Xoá</button></header>
+    <div class="row">
+      <label>Loại giấy<select data-k="loai">${opts}</select></label>
+      <label>Định lượng (gsm)<input data-k="gsm" type="number" value="${c.gsm}"></label>
+      <label>Giá tấn (triệu đ) / giá m²<input data-k="gia" type="number" step="0.1" value="${c.gia}"></label>
+      <label>Giá tờ nhập tay (đ, trống = tự tính)<input data-k="giato" type="number" value="${c.giato??''}"></label>
+    </div>
+    <div class="row">
+      <label>Khổ giấy in<select data-k="kho">${kho}</select></label>
+      <label>KT dài (cm)<input data-k="kd" type="number" step="0.1" value="${c.kd}"></label>
+      <label>KT rộng (cm)<input data-k="kr" type="number" step="0.1" value="${c.kr}"></label>
+      <label>Khổ trải SP: dài × rộng (cm)<span style="display:flex;gap:4px"><input data-k="td" type="number" step="0.1" value="${c.td}"><input data-k="tr" type="number" step="0.1" value="${c.tr}"></span></label>
+    </div>
+    <div class="row">
+      <label>Số con / tờ <span class="hint" data-ups></span><input data-k="con" type="number" value="${c.con}"></label>
+      <label>Số tay<input data-k="tay" type="number" value="${c.tay}"></label>
+      <label>Số màu<input data-k="mau" type="number" value="${c.mau}"></label>
+      <label>Số mặt in<input data-k="mat" type="number" value="${c.mat}"></label>
+      <label>Tờ sửa bài<input data-k="sua" type="number" value="${c.sua}"></label>
+      <label>Hệ số in<input data-k="heso" type="number" step="0.1" value="${c.heso}"></label>
+    </div>
+    <div class="hint" data-sum></div>
+  </div>`;
+}
+function gcHTML(g,i){
+  return `<div class="gc" data-i="${i}">
+    <label>Tên gia công<input data-k="ten" type="text" value="${g.ten}"></label>
+    <label>Đơn giá (đ/cái)<input data-k="gia" type="number" value="${g.gia}"></label>
+    <label>Sàn tối thiểu (đ)<input data-k="min" type="number" value="${g.min||0}"></label>
+    <button class="small" data-delgc="${i}">Xoá</button></div>`;
+}
+function render(){
+  $('comps').innerHTML = comps.map(compHTML).join('');
+  $('gcs').innerHTML = gcs.map(gcHTML).join('');
+  calc();
+}
+function readComps(){
+  document.querySelectorAll('#comps .comp').forEach(el=>{
+    const c = comps[+el.dataset.i];
+    el.querySelectorAll('[data-k]').forEach(inp=>{ const k=inp.dataset.k; c[k] = (k==='ten'||k==='loai'||k==='kho') ? inp.value : (inp.value===''?null:num(inp.value)); });
+  });
+  document.querySelectorAll('#gcs .gc').forEach(el=>{
+    const g = gcs[+el.dataset.i];
+    el.querySelectorAll('[data-k]').forEach(inp=>{ g[inp.dataset.k] = inp.dataset.k==='ten'?inp.value:num(inp.value); });
+  });
+}
+
+// ===== Công thức Excel =====
+function giaTo(c){
+  if(c.giato) return c.giato;
+  let g = c.kd*c.kr*(c.gsm||0)*(c.gia||0)/10000;
+  if(c.loai==='Met') g += c.kd*c.kr*3500/10000;
+  return g;
+}
+function congIn(soTo,c,sheet,giaIn1Kem){
+  const luot = soTo*c.mat;
+  if(luot<3000) return c.tay*c.mau*giaIn1Kem*c.heso;
+  const rate = luot<4000?130:luot<5000?120:luot<6000?110:luot<10000?90:luot<15000?80:(sheet==='SLL'?60:70);
+  return c.tay*soTo*rate*c.mau*c.mat*c.heso;
+}
+function tinh(Q,P){
+  const r = {Q, giay:0, in:0, ctp:0, proof:0, gc:[], khuon:P.khuon*1000, comps:[]};
+  for(const c of comps){
+    if(!c.con||!c.tay){ r.comps.push({soTo:0,giaTo:0,tien:0,in:0}); continue; }
+    const soTo = Q/c.con*1.03 + (c.sua||0);
+    const gt = giaTo(c);
+    const tien = soTo*c.tay*gt;
+    const ci = congIn(soTo,c,P.sheet,P.giain1kem);
+    r.giay += tien; r.in += ci; r.ctp += c.mau*c.tay;
+    r.comps.push({soTo,giaTo:gt,tien,in:ci});
+  }
+  r.ctp = P.ctp ? r.ctp*P.giakem : 0;
+  if(P.proof>0){ const p = P.pd*P.pr*P.pday*P.proof*100; r.proof = P.sheet==='SLL'?Math.max(150000,p):p; }
+  for(const g of gcs){ r.gc.push({ten:g.ten, tien:Math.max(Q*g.gia, g.min||0)}); }
+  r.gcTong = r.gc.reduce((s,x)=>s+x.tien,0);
+  r.vatTu = r.giay + r.in + r.gcTong + r.khuon + r.ctp + r.proof;
+  r.ql = r.vatTu*P.pql; r.vc = r.vatTu*P.pvc; r.khac = r.vatTu*P.pkhac;
+  r.chiPhi = r.vatTu + r.ql + r.vc + r.khac;
+  r.ln = r.chiPhi*P.pln;
+  const hhnv = r.chiPhi*P.phhnv, thnv = hhnv*P.pthnv;
+  r.hhnv = hhnv + thnv;
+  r.donGia = (r.chiPhi + hhnv + thnv + r.ln)/(1 - P.phhkh - P.phhkh*P.pthkh)/Q;
+  r.thanhTien = r.donGia*Q; r.usd = r.donGia/P.usd;
+  return r;
+}
+function params(){
+  const pc = id => num($(id).value)/100;
+  return {sheet:$('sheet').value, usd:num($('usd').value)||19100, pd:num($('pd').value), pr:num($('pr').value), pday:num($('pday').value),
+    proof:num($('proof').value), khuon:num($('khuon').value), giakem:num($('giakem').value), ctp:$('ctp').value==='1', giain1kem:num($('giain1kem').value),
+    pql:pc('pql'), pvc:pc('pvc'), pkhac:pc('pkhac'), pln:pc('pln'), phhnv:pc('phhnv'), pthnv:pc('pthnv'), phhkh:pc('phhkh'), pthkh:pc('pthkh')};
+}
+function calc(){
+  readComps();
+  const P = params();
+  const Qs = $('sl').value.split(/[,; ]+/).map(num).filter(q=>q>0);
+  // gợi ý số con & tóm tắt từng thành phần
+  document.querySelectorAll('#comps .comp').forEach(el=>{
+    const c = comps[+el.dataset.i];
+    if(c.kho!=='custom' && KHO[c.kho]){ [c.kd,c.kr]=KHO[c.kho]; el.querySelector('[data-k=kd]').value=c.kd; el.querySelector('[data-k=kr]').value=c.kr; }
+    const u = ups(c.kd,c.kr,c.td,c.tr);
+    el.querySelector('[data-ups]').innerHTML = u? `gợi ý: <b>${u}</b> con trên ${c.kd}×${c.kr}` : '';
+    const gt = giaTo(c);
+    const first = Qs[0]||0; const soTo = c.con? first/c.con*1.03+(c.sua||0):0;
+    el.querySelector('[data-sum]').innerHTML = `Giá tờ <b>${fmt1(gt)} đ</b> · với ${fmt(first)} cái cần <b>${fmt(soTo)} tờ</b> × ${c.tay} tay = ${fmt(soTo*c.tay*gt)} đ giấy`;
+  });
+  const rs = Qs.map(q=>tinh(q,P));
+  // bảng
+  const rows = [];
+  const line = (label,f,cls='')=>rows.push(`<tr class="${cls}"><td>${label}</td>${rs.map(r=>`<td class="num">${f(r)}</td>`).join('')}</tr>`);
+  rows.push(`<tr><th>Khoản mục</th>${rs.map(r=>`<th>${fmt(r.Q)} cái</th>`).join('')}</tr>`);
+  comps.forEach((c,i)=>line(`Giấy (${String.fromCharCode(65+i)}) ${c.ten} · số tờ`, r=>`${fmt(r.comps[i].tien)} <span class="hint">(${fmt(r.comps[i].soTo)} tờ)</span>`));
+  line('Công in', r=>fmt(r.in));
+  line('Kẽm CTP', r=>fmt(r.ctp));
+  line('Proof', r=>fmt(r.proof));
+  gcs.forEach((g,i)=>line(g.ten, r=>fmt(r.gc[i].tien)));
+  line('Khuôn', r=>fmt(r.khuon));
+  line('Tổng vật tư', r=>fmt(r.vatTu),'total');
+  line('Phí quản lý', r=>fmt(r.ql));
+  line('Bao bì + vận chuyển', r=>fmt(r.vc));
+  line('Chi phí khác', r=>fmt(r.khac));
+  line('Tổng chi phí', r=>fmt(r.chiPhi),'total');
+  line('Lợi nhuận', r=>fmt(r.ln));
+  line('Hoa hồng NVKD + thuế', r=>fmt(r.hhnv));
+  line('Đơn giá chi phí / cái', r=>fmt1(r.chiPhi/r.Q));
+  line('ĐƠN GIÁ BÁN / cái', r=>fmt1(r.donGia),'sell');
+  line('Thành tiền chưa VAT', r=>fmt(r.thanhTien));
+  line('Đơn giá USD', r=>r.usd.toFixed(3));
+  $('out').innerHTML = rows.join('');
+  const cfix = rs.length? rs[0].khuon+rs[0].ctp+rs[0].proof : 0;
+  $('checknote').textContent = rs.length? `Chi phí cố định không đổi theo số lượng (khuôn + kẽm + proof): ${fmt(cfix)} đ. Với ${fmt(rs[0].Q)} cái riêng khoản này đã là ${fmt(cfix/rs[0].Q)} đ/cái.` : 'Nhập số lượng để tính.';
+  // dòng báo giá
+  const step = num($('round').value)||1, vat = num($('vat').value)/100;
+  const ten = $('ten').value || 'sản phẩm';
+  const specs = comps.map(c=>`${c.ten} ${c.loai} ${c.gsm}gsm`).join(', ');
+  const gcTxt = gcs.map(g=>g.ten).join(', ');
+  const tiers = rs.map(r=>{ const dg = Math.ceil(r.donGia/step)*step; const tt = dg*r.Q; return `🔹 ${fmt(r.Q)} cái: ${fmt(dg)} đ/cái (Tổng: ${fmt(tt)} đ, có VAT ${fmt(tt*(1+vat))} đ)`; }).join('\n');
+  $('quote').value = `Dạ em gửi báo giá ${ten} (${P.pd}×${P.pr}×${P.pday} cm):\n\n📋 QUY CÁCH:\n• Giấy: ${specs}\n• In offset ${comps[0]?comps[0].mau:4} màu, ${comps[0]?comps[0].mat:1} mặt\n• Gia công: ${gcTxt}\n\n📊 BÁO GIÁ (chưa VAT ${$('vat').value}%):\n${tiers}\n\nChi phí cố định (khuôn, kẽm) là phần làm đơn giá đội lên ở số lượng nhỏ; tăng số lượng hoặc đổi chất liệu sẽ về gần budget hơn ạ.`;
+  save();
+}
+
+// ===== Presets =====
+function presetSLL(){
+  $('ten').value='Hộp giấy'; $('sl').value='1000'; $('sheet').value='SLL'; $('usd').value=19100;
+  $('pd').value=26; $('pr').value=17; $('pday').value=8; $('proof').value=0.1;
+  $('khuon').value=500; $('giakem').value=110000; $('ctp').value='1'; $('giain1kem').value=300000;
+  ['pql','pkhac','pln','phhnv','pthnv','phhkh','pthkh'].forEach(id=>$(id).value=0); $('pvc').value=5;
+  comps=[{ten:'Hộp giấy',loai:'Ivory',gsm:300,gia:18,giato:null,kho:'65x43',kd:65,kr:43,td:39,tr:70,con:1,tay:1,mau:4,mat:1,sua:300,heso:1}];
+  gcs=[{ten:'Bế',gia:1401,min:0},{ten:'Dán dây',gia:1500,min:0},{ten:'Ép kim 20x12cm',gia:720,min:0},{ten:'Dập nổi 28x8cm',gia:1344,min:0}];
+  render(); flash('Đã nạp. Excel ra 9.725,49 đ/cái; bảng bên phải phải ra đúng số này.');
+}
+function presetUyen(){
+  $('ten').value='Hộp âm dương 30×12×7 cm (bồi chipboard)'; $('sl').value='100, 300, 500'; $('sheet').value='it'; $('usd').value=19100;
+  $('pd').value=30; $('pr').value=12; $('pday').value=7; $('proof').value='';
+  $('khuon').value=1000; $('giakem').value=110000; $('ctp').value='1'; $('giain1kem').value=300000;
+  ['pql','pkhac','phhnv','pthnv','phhkh','pthkh'].forEach(id=>$(id).value=0); $('pvc').value=5; $('pln').value=30;
+  comps=[
+    {ten:'Áo giấy nắp + đáy (48×30)',loai:'Couche',gsm:150,gia:21,giato:null,kho:'79x109',kd:79,kr:109,td:48,tr:30,con:2,tay:1,mau:4,mat:1,sua:100,heso:1},
+    {ten:'Chipboard nắp + đáy (44×26)',loai:'Chipboard',gsm:1200,gia:16.5,giato:null,kho:'79x109',kd:79,kr:109,td:44,tr:26,con:3,tay:1,mau:0,mat:0,sua:10,heso:1},
+    {ten:'Lót ruột be (44×26)',loai:'Couche',gsm:150,gia:21,giato:null,kho:'79x109',kd:79,kr:109,td:44,tr:26,con:3,tay:1,mau:0,mat:0,sua:10,heso:1}
+  ];
+  gcs=[{ten:'Cán màng mờ 1 mặt',gia:700,min:300000},{ten:'Bế áo + chipboard',gia:1500,min:300000},{ten:'Cấy + lên hộp',gia:3000,min:600000},{ten:'Bồi + dán + đẩy',gia:3000,min:600000},{ten:'Support / đóng gói',gia:1000,min:300000}];
+  render(); flash('Mẫu ước tính theo ghi chú tay: đơn giá gia công hộp cứng cần My xác nhận lại.');
+}
+function flash(t){ $('flash').textContent=t; setTimeout(()=>$('flash').textContent='',6000); }
+
+// ===== Lưu / nạp =====
+function save(){ try{ const ids=['ten','sl','sheet','usd','pd','pr','pday','proof','khuon','giakem','ctp','giain1kem','pql','pvc','pkhac','pln','phhnv','pthnv','phhkh','pthkh','round','vat'];
+  const o={}; ids.forEach(id=>o[id]=$(id).value); localStorage.setItem('tinhgia', JSON.stringify({o,comps,gcs})); }catch(e){} }
+function load(){ try{ const s=JSON.parse(localStorage.getItem('tinhgia')||'null'); if(!s) return false;
+  Object.entries(s.o).forEach(([k,v])=>{ if($(k)) $(k).value=v; }); comps=s.comps||[]; gcs=s.gcs||[]; return comps.length>0; }catch(e){ return false; } }
+
+// ===== Sự kiện =====
+document.addEventListener('input', e=>{ if(e.target.matches('input,select')) calc(); });
+document.addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.del!==undefined){ readComps(); comps.splice(+b.dataset.del,1); render(); }
+  if(b.dataset.delgc!==undefined){ readComps(); gcs.splice(+b.dataset.delgc,1); render(); }
+});
+$('btnAddComp').onclick=()=>{ readComps(); comps.push({ten:'Thành phần mới',loai:'Couche',gsm:150,gia:21,giato:null,kho:'79x109',kd:79,kr:109,td:0,tr:0,con:1,tay:1,mau:0,mat:0,sua:50,heso:1}); render(); };
+$('btnAddGC').onclick=()=>{ readComps(); gcs.push({ten:'Gia công',gia:0,min:0}); render(); };
+$('btnPresetSLL').onclick=presetSLL; $('btnPresetUyen').onclick=presetUyen;
+$('btnReset').onclick=()=>{ comps=[]; gcs=[]; $('sl').value=''; render(); };
+$('btnCopy').onclick=()=>{ const t=$('quote').value; const done=()=>{ $('flash2').textContent='Đã sao chép'; setTimeout(()=>$('flash2').textContent='',3000); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done).catch(()=>{ $('quote').select(); done(); }); } else { $('quote').select(); done(); } };
+
+if(!load()) presetSLL(); else render();
+</script>
