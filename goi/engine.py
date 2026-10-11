@@ -112,6 +112,12 @@ class DonHang:
     kts: bool = None                                   # None = tự chọn theo số lượng
     kieu_2_mat: str = None                             # AB | tu_tro | tro_nhip | None = tự chọn rẻ nhất
     loai_sp: str = ""
+    ep_kim_kt: tuple = None
+    dap_noi_kt: tuple = None
+    dap_noi_am_duong: bool = False
+    so_mep_dan: int = 1
+    tui_2_manh: bool = False
+    gia_quai: float = None
 
 
 def nen_in_nhanh(don: DonHang, SL: int) -> bool:
@@ -136,6 +142,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
     tong = 0.0
     dien_tich_sp = 0.0
     kem = 0
+    tong_nhip = 0.0
     for tp in don.thanh_phan:
         # Chọn khổ theo tổng chi phí giấy + in thấp nhất (bình bài ảo), trừ khi tin đã chỉ định khổ/số con
         ung_vien = [(don.kho, don.con)] if (don.kho and don.con) else             [((W, H), ups_cat_tai(W, H, tp.trai_w, tp.trai_h, don.loai_sp in ("hop_gap", "tui_giay") and tp.loai not in ("Chipboard", "Decal") and tp.con_moi_sp == 1)) for W, H in ([K["kho_in_nhanh"]] if (kts and tp.so_mau) else P["kho_giay"])]
@@ -186,6 +193,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             if tp.so_mau and so_to * tp.so_mat < 3000:
                 r["co_dinh"] += tien_in
         tien_giay = so_to * gt
+        tong_nhip += so_to
         dien_tich_sp += tp.trai_w * tp.trai_h * tp.con_moi_sp / 10000
         r["dong"].append((f"{tp.ten} {tp.loai} {tp.gsm}g ({u} con/tờ {W}×{H}, {fmt(so_to)} tờ)", tien_giay))
         if tien_in:
@@ -210,18 +218,46 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         g = P["gia_cong"].get(key)
         if not g or key in thay_the:
             continue
+        nhan = g["ten"]
+        khuon_gc = g.get("khuon", 0)
         if g["don_vi"] == "m2":
             tien = max(SL * dien_tich_sp * g["gia"], g.get("san", 0))
         elif g["don_vi"] == "lo":
             tien = g["gia"]
+        elif g["don_vi"] == "nhip":
+            rate = next((rt for nguong, rt in g["bac_nhip"] if tong_nhip < nguong), g["gia_toi_thieu"])
+            tien = max(tong_nhip * rate, g.get("san", 0))
+            nhan = f"{g['ten']} ({fmt(tong_nhip)} nhịp × {rate}đ)"
+        elif g["don_vi"] == "mep":
+            tien = max(SL * g["gia"] * don.so_mep_dan, g.get("san", 0))
+            nhan = f"{g['ten']} ({don.so_mep_dan} mép × {g['gia']}đ)"
+        elif g["don_vi"] == "cm2":
+            kt_spec = don.ep_kim_kt if key == "ep_kim" else don.dap_noi_kt
+            kt = kt_spec or (10, 5)
+            if not kt_spec:
+                r["mac_dinh"].append(f"vùng {g['ten'].lower()} 10×5 cm")
+            am_duong = key == "dap_noi" and don.dap_noi_am_duong
+            dg = g["gia_am_duong"] if am_duong else g["gia"]
+            if am_duong:
+                khuon_gc *= 2
+                nhan = "Dập nổi âm dương"
+            tien = max(SL * kt[0] * kt[1] * dg, g.get("san", 0))
+            nhan += f" ({kt[0]}×{kt[1]} cm × {dg}đ)"
+        elif key == "dan_tui":
+            tien = max(SL * (g["gia_2_manh"] if don.tui_2_manh else g["gia"]), g["san_2_manh"] if don.tui_2_manh else g["san"])
+            nhan = g["ten"] + (" (2 mảnh)" if don.tui_2_manh else " (1 mảnh)")
+        elif key == "quai_tui":
+            tien = SL * (don.gia_quai or g["gia"])
+            if not don.gia_quai:
+                r["mac_dinh"].append("quai dây phổ thông 350đ/cặp")
         else:
             tien = max(SL * g["gia"], g.get("san", 0))
-        r["dong"].append((g["ten"], tien))
+        r["dong"].append((nhan, tien))
         tong += tien
-        if g.get("khuon"):
-            r["dong"].append((f"Khuôn {g['ten'].lower()}", g["khuon"]))
-            tong += g["khuon"]
-            r["co_dinh"] += g["khuon"]
+        if khuon_gc:
+            r["dong"].append(("Khuôn " + nhan.split(" (")[0].lower(), khuon_gc))
+            tong += khuon_gc
+            r["co_dinh"] += khuon_gc
         if g.get("uoc_tinh"):
             r["uoc_tinh"].append(g["ten"])
     if kts:
@@ -279,6 +315,13 @@ def dung_don(spec: dict) -> DonHang:
     don.proof = not spec.get("khong_proof")
     don.kts = spec.get("in_kts")
     don.kieu_2_mat = spec.get("kieu_in_2_mat")
+    don.ep_kim_kt = tuple(spec["ep_kim_kt"]) if spec.get("ep_kim_kt") else None
+    don.dap_noi_kt = tuple(spec["dap_noi_kt"]) if spec.get("dap_noi_kt") else None
+    don.dap_noi_am_duong = bool(spec.get("dap_noi_am_duong"))
+    kieu = (spec.get("kieu_hop") or "").lower()
+    don.so_mep_dan = spec.get("so_mep_dan") or (3 if any(k in kieu for k in ("đáy khóa", "đáy cài", "khóa đáy")) else 1)
+    don.tui_2_manh = bool(spec.get("tui_2_manh"))
+    don.gia_quai = spec.get("gia_quai")
     don.loai_sp = spec.get("loai") or "hop_gap"
     don.gc_tuy_chinh = [(g["ten"], g["gia_moi_cai"]) for g in (spec.get("gia_cong_tuy_chinh") or [])]
     if not spec.get("giay"):
@@ -336,7 +379,7 @@ def _dung_don(spec: dict) -> DonHang:
         return DonHang(ten or "Tem decal", tp, gc, khuon_be=1)
     if loai == "tui_giay":
         tp = [ThanhPhan("Túi giấy", giay, gsm, 2 * (D + R) + 3, C + R + 5, 1, mau, 1)]
-        gc = [g for g in gc if not g.startswith("dan")] + ["be", "dan_tui"]
+        gc = [g for g in gc if not g.startswith("dan")] + ["be", "dan_tui", "quai_tui"]
         return DonHang(ten or "Túi giấy", tp, gc, khuon_be=1)
 
     # Hộp giấy gập

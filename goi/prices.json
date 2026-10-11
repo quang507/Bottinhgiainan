@@ -73,17 +73,20 @@
     },
     "ep_kim": {
       "ten": "Ép kim",
-      "don_vi": "con",
-      "gia": 720,
+      "don_vi": "cm2",
+      "gia": 3,
       "san": 300000,
-      "khuon": 300000
+      "khuon": 300000,
+      "_ghi_chu": "My: dài × rộng (cm) × 3đ/con"
     },
     "dap_noi": {
       "ten": "Dập nổi",
-      "don_vi": "con",
-      "gia": 1344,
+      "don_vi": "cm2",
+      "gia": 4,
+      "gia_am_duong": 8,
       "san": 300000,
-      "khuon": 300000
+      "khuon": 300000,
+      "_ghi_chu": "My: dài × rộng × 4đ (1 khuôn); âm dương ×8đ (2 khuôn)"
     },
     "uv_dinh_vi": {
       "ten": "UV định vị",
@@ -93,15 +96,32 @@
     },
     "be": {
       "ten": "Bế thành phẩm",
-      "don_vi": "con",
-      "gia": 1000,
-      "san": 300000
+      "don_vi": "nhip",
+      "gia": 750,
+      "gia_toi_thieu": 450,
+      "bac_nhip": [
+        [
+          1000,
+          750
+        ],
+        [
+          3000,
+          600
+        ],
+        [
+          999999999,
+          450
+        ]
+      ],
+      "san": 300000,
+      "_ghi_chu": "My: 750đ/nhịp, giảm theo số lượng tới tối thiểu 450đ/nhịp, lô ≥300k. Bậc 1000/3000 nhịp do Quang đặt."
     },
     "dan_may": {
-      "ten": "Dán hộp (máy)",
-      "don_vi": "con",
+      "ten": "Dán hộp",
+      "don_vi": "mep",
       "gia": 150,
-      "san": 150000
+      "san": 150000,
+      "_ghi_chu": "My: 150đ/mép dán/con"
     },
     "dan_tay": {
       "ten": "Dán tay",
@@ -110,10 +130,13 @@
       "san": 200000
     },
     "dan_tui": {
-      "ten": "Dán túi + quai",
+      "ten": "Gấp dán túi + xỏ quai",
       "don_vi": "con",
-      "gia": 2300,
-      "san": 300000
+      "gia": 1000,
+      "san": 300000,
+      "gia_2_manh": 1600,
+      "san_2_manh": 500000,
+      "_ghi_chu": "My: 1 mảnh 1.000đ (≥300k), 2 mảnh 1.600đ (≥500k)"
     },
     "boi_hop_cung": {
       "ten": "Bồi hộp cứng",
@@ -146,9 +169,24 @@
     },
     "be_hop_cung": {
       "ten": "Bế 4 thành phần hộp cứng",
-      "don_vi": "con",
-      "gia": 4000,
-      "san": 600000
+      "don_vi": "nhip",
+      "gia": 750,
+      "gia_toi_thieu": 450,
+      "bac_nhip": [
+        [
+          1000,
+          750
+        ],
+        [
+          3000,
+          600
+        ],
+        [
+          999999999,
+          450
+        ]
+      ],
+      "san": 300000
     },
     "phay_ranh": {
       "ten": "Phay rãnh chipboard",
@@ -169,6 +207,14 @@
       "don_vi": "con",
       "gia": 15000,
       "san": 0
+    },
+    "quai_tui": {
+      "ten": "Quai túi (cặp)",
+      "don_vi": "con",
+      "gia": 350,
+      "gia_toi_da": 1100,
+      "san": 0,
+      "_ghi_chu": "My: 350–1.100đ/cặp tùy dây, mặc định dây phổ thông"
     }
   },
   "pct_van_chuyen": 0.05,
