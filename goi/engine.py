@@ -8,10 +8,37 @@ from dataclasses import dataclass, field
 P = json.load(open(os.path.join(os.path.dirname(__file__), "prices.json"), encoding="utf-8"))
 
 
+def _grid_plus_strip(W, H, w, h):
+    """Lưới chính w×h, phần dư bên phải và bên dưới xếp con xoay 90°."""
+    c, r = math.floor(W / w), math.floor(H / h)
+    if c == 0 or r == 0:
+        return 0
+    n = c * r
+    phai = math.floor((W - c * w) / h) * math.floor(H / w)          # dải dư bên phải, con xoay
+    duoi = math.floor(W / h) * math.floor((H - r * h) / w)          # dải dư bên dưới, con xoay
+    return n + max(phai, duoi)
+
+
 def ups(W, H, w, h):
+    """Số con/tờ: thử 2 chiều, mỗi chiều lưới + dải dư xoay con."""
     if not w or not h:
         return 0
-    return max(math.floor(W / w) * math.floor(H / h), math.floor(W / h) * math.floor(H / w))
+    return max(_grid_plus_strip(W, H, w, h), _grid_plus_strip(W, H, h, w))
+
+
+CAT_TAI = (0, 0.5, 1.0, 1.5)   # mức bớt tai dán (cm) được phép thử
+
+
+def ups_cat_tai(W, H, w, h, cho_phep=True):
+    """Trả về (số con, cm đã bớt) – chỉ bớt tai khi nhờ đó thêm được con."""
+    best = (ups(W, H, w, h), 0)
+    if not cho_phep:
+        return best
+    for t in CAT_TAI[1:]:
+        u = max(ups(W, H, w - t, h), ups(W, H, w, h - t), ups(W, H, w - t, h - t))
+        if u > best[0]:
+            best = (u, t)
+    return best
 
 
 def chon_kho(w, h, kho_list=None):
@@ -109,13 +136,14 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
     kem = 0
     for tp in don.thanh_phan:
         # Chọn khổ theo tổng chi phí giấy + in thấp nhất (bình bài ảo), trừ khi tin đã chỉ định khổ/số con
-        ung_vien = [(don.kho, don.con)] if (don.kho and don.con) else             [((W, H), ups(W, H, tp.trai_w, tp.trai_h)) for W, H in ([K["kho_in_nhanh"]] if (kts and tp.so_mau) else P["kho_giay"])]
-        ung_vien = [(k, u) for k, u in ung_vien if u]
+        ung_vien = [(don.kho, don.con)] if (don.kho and don.con) else             [((W, H), ups_cat_tai(W, H, tp.trai_w, tp.trai_h, tp.loai not in ("Chipboard", "Decal") and tp.con_moi_sp == 1)) for W, H in ([K["kho_in_nhanh"]] if (kts and tp.so_mau) else P["kho_giay"])]
+        ung_vien = [(k, u) for k, u in ung_vien if (u[0] if isinstance(u, tuple) else u)]
         if not ung_vien:
             r["dong"].append((f"{tp.ten}: khổ trải {tp.trai_w}×{tp.trai_h} vượt khổ giấy", 0))
             continue
         tot_nhat = None
         for (W, H), u in ung_vien:
+            u, cat = (u if isinstance(u, tuple) else (u, 0))
             if don.tu_sua_bai is not None:
                 sua = don.tu_sua_bai
             elif kts:
@@ -130,8 +158,10 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
                 tien_in = cong_in(so_to, tp.so_mau, tp.so_mat)
             tong_tp = so_to * gt + tien_in
             if tot_nhat is None or tong_tp < tot_nhat[0]:
-                tot_nhat = (tong_tp, W, H, u, so_to, gt, tien_in)
-        _, W, H, u, so_to, gt, tien_in = tot_nhat
+                tot_nhat = (tong_tp, W, H, u, so_to, gt, tien_in, cat)
+        _, W, H, u, so_to, gt, tien_in, cat = tot_nhat
+        if cat:
+            r["uoc_tinh"].append(f"{tp.ten.lower()}: bớt tai dán {cat} cm để xếp {u} con/tờ {W}×{H}, My duyệt")
         if not kts:
             kem += tp.so_mau * tp.so_mat
             if tp.so_mau and so_to * tp.so_mat < 3000:
