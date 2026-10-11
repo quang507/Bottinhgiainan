@@ -26,6 +26,7 @@ CHO_HOI_LAI = {"loai", "dai", "rong", "so_luong"}
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("goi-bot")
+logging.getLogger("httpx").setLevel(logging.WARNING)   # không ghi URL chứa token vào log
 client = anthropic.Anthropic()
 http = httpx.Client(timeout=60)
 
