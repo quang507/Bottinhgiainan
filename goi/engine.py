@@ -144,7 +144,13 @@ def nen_in_nhanh(don: DonHang, SL: int) -> bool:
 def tinh(don: DonHang, SL: int, kts: bool = None):
     K = P["don_kts"]
     if kts is None:
-        kts = don.kts if don.kts is not None else nen_in_nhanh(don, SL)
+        if don.kts is not None:
+            kts = don.kts
+        elif nen_in_nhanh(don, SL):               # in nhanh khả thi → lấy cách rẻ hơn
+            a, b = tinh(don, SL, True), tinh(don, SL, False)
+            return a if (b.get("vuot_kho") or a["chi_phi"] <= b["chi_phi"]) else b
+        else:
+            kts = False
     r = {"SL": SL, "dong": [], "co_dinh": 0.0, "uoc_tinh": list(don.uoc_tinh), "mac_dinh": list(don.mac_dinh), "kts": kts}
     tong = 0.0
     dien_tich_sp = 0.0
@@ -155,7 +161,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         ung_vien = [(don.kho, don.con)] if (don.kho and don.con) else             [((W, H), ups_cat_tai(W, H, tp.trai_w, tp.trai_h, don.loai_sp in ("hop_gap", "tui_giay") and tp.loai not in ("Chipboard", "Decal") and tp.con_moi_sp == 1)) for W, H in (([k["kho"] for k in K["kho_in_nhanh"]]) if (kts and tp.so_mau) else P["kho_giay"])]
         ung_vien = [(k, u) for k, u in ung_vien if (u[0] if isinstance(u, tuple) else u)]
         if not ung_vien:
-            r["dong"].append((f"{tp.ten}: khổ trải {tp.trai_w}×{tp.trai_h} vượt khổ giấy", 0))
+            r.setdefault("vuot_kho", []).append((tp.ten, tp.trai_w, tp.trai_h))
             continue
         tot_nhat = None
         for (W, H), u in ung_vien:
@@ -464,10 +470,40 @@ def _dung_don(spec: dict) -> DonHang:
         if not any(g.startswith("dan") for g in gc):
             gc.append("dan_tay")
     else:
-        tp = [ThanhPhan("Hộp", giay, gsm, 2 * (D + R) + 2, C + 2 * R + 3, 1, mau, mat)]
-        kb = 1
+        # Hộp 1 mảnh nắp gài: thân quấn quanh (a, b), sâu c → khổ trải 2(a+b)+2 × c+2b+3.
+        # Mặc định theo đúng thứ tự khách ghi; nếu vượt khổ giấy thì thử xoay kết cấu, rồi tới 2 mảnh âm dương.
+        def trai(a, b, c):
+            return 2 * (a + b) + 2, c + 2 * b + 3
+        def lot(w, h):
+            return any(ups(W, H, w, h) for W, H in P["kho_giay"])
+        w0, h0 = trai(D, R, C)
+        ghi_chu = None
+        if lot(w0, h0) or not (D and R and C):
+            tp = [ThanhPhan("Hộp", giay, gsm, w0, h0, 1, mau, mat)]
+            kb = 1
+        else:
+            xoay = [(trai(D, C, R), "mở ở cạnh dài"), (trai(R, C, D), "mở ở cạnh ngắn")]
+            xoay = [(wh, ten_x) for wh, ten_x in xoay if lot(*wh)]
+            if xoay:
+                (w1, h1), ten_x = min(xoay, key=lambda x: x[0][0] * x[0][1])
+                tp = [ThanhPhan("Hộp", giay, gsm, w1, h1, 1, mau, mat)]
+                kb = 1
+                ghi_chu = f"nắp gài mở mặt lớn cần khổ trải {w0:g}×{h0:g} (vượt khổ giấy) nên em tính kết cấu {ten_x}"
+            elif lot(D + 2 * C + 3, R + 2 * C + 3):
+                tp = [ThanhPhan("Nắp", giay, gsm, D + 2 * C + 3, R + 2 * C + 3, 1, mau, 1),
+                      ThanhPhan("Đáy", giay, gsm, D + 2 * C + 3, R + 2 * C + 3, 1, mau, 1)]
+                kb = 2
+                ghi_chu = "hộp 1 mảnh vượt khổ giấy nên em tính kiểu âm dương 2 mảnh"
+                if not any(g.startswith("dan") for g in gc):
+                    gc.append("dan_tay")
+            else:
+                tp = [ThanhPhan("Hộp", giay, gsm, w0, h0, 1, mau, mat)]   # để tinh() báo vượt khổ
+                kb = 1
         if not any(g.startswith("dan") for g in gc):
             gc.append("dan_may")
+        if "be" not in gc:
+            gc.append("be")
+        return DonHang(ten or "Hộp giấy", tp, gc, khuon_be=kb, uoc_tinh=[ghi_chu] if ghi_chu else [])
     if "be" not in gc:
         gc.append("be")
     return DonHang(ten or "Hộp giấy", tp, gc, khuon_be=kb)
@@ -509,6 +545,15 @@ def fmt_k(n):
     return f"{n:,.0f}đ".replace(",", ".")
 
 
+def thong_bao_vuot_kho(spec: dict, don: DonHang, r: dict) -> str:
+    ten, w, h = r["vuot_kho"][0]
+    lon = max(P["kho_giay"], key=lambda k: k[0] * k[1])
+    kt = "×".join(str(int(x) if float(x).is_integer() else x) for x in (spec.get("dai"), spec.get("rong"), spec.get("cao")) if x)
+    return (f"⚠️ {don.ten} {kt} cm: khổ trải khoảng {w:g}×{h:g} cm, vượt khổ giấy lớn nhất {lon[0]}×{lon[1]} nên không làm được hộp giấy 1 mảnh.\n"
+            "Cỡ này thường làm thùng carton sóng hoặc ghép nhiều mảnh, cần My tư vấn kết cấu.\n"
+            "Anh/chị kiểm tra lại kích thước giúp em (có nhầm mm với cm không?).")
+
+
 def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     """Một tin Zalo gọn: quy cách · giá 3 mức · bóc tách 1 dòng · so sánh · ước tính/mặc định · chính sách."""
     def so(x):
@@ -523,19 +568,21 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     ten = don.ten if (kt and kt.replace("×", "x") in ten_chuan) else f"{don.ten} {kt} cm"
     trai = ""
     r0_bai = (ket_qua[0].get("bai_binh") or [None])[0]
-    if don.loai_sp in ("hop_gap", "hop_cung", "tui_giay") and r0_bai:
+    if don.loai_sp in ("hop_gap", "hop_cung", "tui_giay") and r0_bai and not don.kho:
         trai = f" · khổ trải {so(round(r0_bai[3], 1))}×{so(round(r0_bai[4], 1))}"
     if tp0 and "2 mảnh" in tp0.ten:
         trai += " mỗi mảnh (túi 2 mảnh)"
     L = [f"📦 {ten} · {quy_cach}" + (" · " + ", ".join(gc) if gc else "") + trai]
     for r in ket_qua:
         duoi = "(theo bảng giá My)" if r.get("niem_yet") else f"(vốn {fmt(r['gia_von'])}, lãi {int(round(r['pct_ln'] * 100))}%)"
-        L.append(f"🔹 {fmt(r['SL'])} cái: giá bán {fmt(r['gia_ban_tron'])} đ/cái · tổng {fmt(r['gia_ban_tron'] * r['SL'])} đ ({'KTS' if r['kts'] else 'offset'}, {duoi.strip('()')})")
+        che_do = "" if r.get("niem_yet") else ("in nhanh, " if r["kts"] else "offset, ")
+        L.append(f"🔹 {fmt(r['SL'])} cái: giá bán {fmt(r['gia_ban_tron'])} đ/cái · tổng {fmt(r['gia_ban_tron'] * r['SL'])} đ ({che_do}{duoi.strip('()')})")
     r0 = ket_qua[0]
     if any(r.get("niem_yet") for r in ket_qua):
         L.append("📋 Giá bán theo bảng decal offset của My (cán bóng, cắt TP, nội suy theo kích thước); vốn bên dưới chỉ để tham khảo.")
     boc = " · ".join(f"{t.split(' (')[0].replace('Công in', 'in').replace(' thành phẩm', '')} {fmt_k(v)}" for t, v in r0["dong"] if v)
-    L.append(f"🧾 @{fmt(r0['SL'])}: {boc}. Cố định {fmt_k(r0['co_dinh'])} = {fmt_k(r0['co_dinh'] / r0['SL'])}/cái.")
+    co_san = " Khuôn có sẵn nên không tính tiền khuôn." if getattr(don, "khuon_co_san", False) and don.khuon_be else ""
+    L.append(f"🧾 @{fmt(r0['SL'])}: {boc}. Cố định {fmt_k(r0['co_dinh'])} = {fmt_k(r0['co_dinh'] / r0['SL'])}/cái.{co_san}")
     khac = tinh(don, r0["SL"], kts=not r0["kts"])
     if r0.get("niem_yet") or not any(tp.so_mau for tp in don.thanh_phan):
         kha_thi = None

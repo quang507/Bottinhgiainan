@@ -4,6 +4,7 @@ Lưu ý API: schema structured output chỉ cho tối đa 16 trường union/nul
 Giá trị "chưa nói" dùng sentinel (0, "", [], -1) và được đổi về None trong chuan_hoa()."""
 import json
 import os
+import re
 from typing import List, Literal
 
 import anthropic
@@ -150,21 +151,34 @@ def _goi_gemini(noi_dung: str, anh: tuple = None) -> "Spec":
     }
     import time as _t
     last = None
-    for model in (GEMINI_MODEL, "gemini-3.5-flash-lite"):
-        for lan in range(3):
+    models = [m.strip() for m in os.environ.get("GEMINI_MODELS", "gemini-3.5-flash-lite,gemini-3.5-flash").split(",") if m.strip()]
+    for model in models:
+        if _HET_HAN.get(model, 0) > _t.time():
+            last = last or RuntimeError(f"Gemini {model} 429: hết hạn mức ngày")
+            continue
+        for lan in range(2):
             r = httpx.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-                           params={"key": key}, json=body, timeout=60)
+                           params={"key": key}, json=body, timeout=45)
             if r.status_code == 200:
                 text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
                 return Spec.model_validate(json.loads(text))
             last = RuntimeError(f"Gemini {model} {r.status_code}: {r.text[:200]}")
-            if r.status_code in (402,):
-                break                      # hết tiền: đổi model cũng vô ích
-            if r.status_code in (429, 503):
-                _t.sleep(2 + 3 * lan)      # quá tải/hạn mức: chờ rồi thử lại
+            if r.status_code == 429:
+                m = re.search(r'"retryDelay":\s*"(\d+)', r.text)
+                cho = int(m.group(1)) if m else 60
+                if cho > 20 or "PerDay" in r.text:          # hết hạn mức ngày/phút dài → bỏ model này, không chờ
+                    _HET_HAN[model] = _t.time() + min(cho, 6 * 3600)
+                    break
+                _t.sleep(min(cho, 5) + 1)
+                continue
+            if r.status_code == 503 and lan == 0:
+                _t.sleep(2)
                 continue
             break
     raise last
+
+
+_HET_HAN = {}      # model → thời điểm (epoch) được thử lại
 
 
 def boc_tach(client: anthropic.Anthropic, tin_moi: str, da_biet: dict = None, anh: tuple = None) -> dict:
@@ -178,7 +192,7 @@ def boc_tach(client: anthropic.Anthropic, tin_moi: str, da_biet: dict = None, an
             return chuan_hoa(_goi_gemini(noi_dung, anh))
         except RuntimeError as e:
             # hết credit / quá hạn mức Gemini → thử Claude nếu có key
-            if client is None or not any(c in str(e) for c in ("402", "429", "503", "RESOURCE_EXHAUSTED", "UNAVAILABLE")):
+            if client is None:
                 raise
     if client is None:
         raise RuntimeError("Chưa cấu hình LLM nào có tiền (GEMINI_API_KEY hoặc ANTHROPIC_API_KEY)")

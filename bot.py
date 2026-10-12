@@ -12,6 +12,7 @@ import httpx
 sys.path.insert(0, str(Path(__file__).parent))
 from goi import engine                      # noqa: E402
 from goi.extract import boc_tach            # noqa: E402
+from goi import parse_rules                 # noqa: E402
 
 ROOT = Path(__file__).parent
 for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines() if (ROOT / ".env").exists() else []:
@@ -86,10 +87,13 @@ def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
         return "Đã xoá thông số cũ. Gửi yêu cầu mới (loại hộp, kích thước, số lượng, giấy, gia công)."
     if lower in ("giá", "gia", "/gia", "bảng giá"):
         p = engine.P
-        giay = ", ".join(f"{k} {v}tr/tấn" for k, v in p["giay_tr_tan"].items())
-        return (f"Bảng giá đang dùng:\n• Giấy: {giay}\n• Chipboard {p['chipboard_gia_to_65x86']:,} đ/tờ 65×86\n"
-                f"• Kẽm {p['gia_kem']:,} đ/bản, công in tối thiểu {p['cong_in_toi_thieu_1_kem']:,} đ/kẽm, khuôn bế {p['khuon_be']:,} đ\n"
-                f"• Vận chuyển {int(p['pct_van_chuyen']*100)}%, lợi nhuận {int(p['pct_loi_nhuan']*100)}%").replace(",", ".")
+        f = engine.fmt
+        giay = ", ".join(f"{k} {v:g}" for k, v in p["giay_tr_tan"].items())
+        ln = " · ".join(f"dưới {f(n)} cái {int(pc * 100)}%" if n < 10 ** 8 else f"còn lại {int(pc * 100)}%" for n, pc in p["bac_loi_nhuan"]["bac"])
+        return (f"Bảng giá đang dùng:\n• Giấy (triệu/tấn): {giay}\n"
+                f"• Kẽm {f(p['gia_kem'])} đ/bản · in offset tối thiểu 1 màu {f(p['cong_in_toi_thieu_theo_mau']['1'])}, 4 màu {f(p['cong_in_toi_thieu_theo_mau']['4'])} đ\n"
+                f"• Cán mờ {f(p['gia_cong']['can_mo']['gia'])} đ/m², bóng {f(p['gia_cong']['can_bong']['gia'])} đ/m² · bế {p['gia_cong']['be']['gia']} đ/nhịp · khuôn {f(p['khuon_be_theo_kich_thuoc']['toi_thieu'])}–{f(p['khuon_be_theo_kich_thuoc']['toi_da'])} đ\n"
+                f"• Vận chuyển nội bộ {int(p['pct_van_chuyen'] * 100)}% · lãi: {ln}")
     if lower in ("chính sách", "chinh sach", "điều khoản", "/chinhsach"):
         return chr(10).join("📎 " + d for d in engine.P.get("chinh_sach", {}).get("dong", []))
     if lower in ("help", "/help", "hướng dẫn", "?"):
@@ -97,7 +101,19 @@ def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
                 "Bot sẽ hỏi lại nếu thiếu, rồi báo giá 3 bậc số lượng. Gõ 'chính sách' xem điều khoản, 'reset' làm đơn mới, 'giá' xem bảng giá.")
 
     da_biet = state.get(chat_id, {}).get("spec")
-    s = boc_tach(client, t, da_biet, anh)
+    rs, chac, _ = parse_rules.phan_tich(t, da_biet)
+    canh_bao = ""
+    if anh or not chac:                       # tin lộn xộn, nhiều sản phẩm, có ảnh → cần AI
+        try:
+            s = boc_tach(client, t, da_biet, anh)
+        except Exception as e:  # noqa: BLE001
+            log.warning("AI không dùng được (%s), chuyển sang bộ quy tắc", str(e)[:160])
+            if anh:
+                return "Hiện em chưa đọc được ảnh (AI đang hết hạn mức). Anh/chị gõ thông số bằng chữ giúp em: loại, kích thước, số lượng, giấy, gia công."
+            s = rs
+            canh_bao = "\n⚠️ AI đang hết hạn mức nên em đọc tin bằng bộ quy tắc. Anh/chị xem lại dòng 📦 có đúng ý không."
+    else:
+        s = rs
     if s.get("y_dinh") == "tom_tat" and state.get(chat_id, {}).get("tom_tat"):
         return state[chat_id]["tom_tat"]
     if s.get("y_dinh") == "khac" and not anh and not s.get("so_luong") and not s.get("dai"):
@@ -125,15 +141,19 @@ def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
     if s["loai"] in ("hop_gap", "hop_cung", "tui_giay") and not s.get("cao"):
         thieu.append("chiều cao")
     if thieu:
-        return s["cau_hoi"] or ("Cho em xin thêm: " + ", ".join(thieu) + " ạ.")
+        return (s["cau_hoi"] or ("Cho em xin thêm: " + ", ".join(thieu) + " ạ.")) + canh_bao
     don = engine.dung_don(s)
     ket_qua = [engine.tinh(don, q) for q in bac_so_luong(s["so_luong"])]
     r0 = ket_qua[0]
+    if r0.get("vuot_kho"):
+        return engine.thong_bao_vuot_kho(s, don, r0)
+    if s.get("nhieu_sp") and canh_bao:
+        canh_bao += "\n⚠️ Tin có nhiều sản phẩm, em mới tính cái đầu tiên. Gửi riêng từng sản phẩm để em tính tiếp."
     state[chat_id]["tom_tat"] = (f"💰 {don.ten}: {engine.fmt(r0['gia_ban_tron'])} đ/cái cho {engine.fmt(r0['SL'])} cái, "
                                  f"tổng {engine.fmt(r0['gia_ban_tron'] * r0['SL'])} đ (chưa VAT 8%, chưa vận chuyển)."
                                  + ("".join(f" {engine.fmt(r['SL'])} cái: {engine.fmt(r['gia_ban_tron'])} đ." for r in ket_qua[1:])))
     luu_state()
-    return engine.soan_tin(s, don, ket_qua)
+    return engine.soan_tin(s, don, ket_qua) + canh_bao
 
 
 def xu_ly(update: dict):
