@@ -527,7 +527,7 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     md = r0["mac_dinh"]
     can_them = []
     if any("khổ trải" in u for u in uoc):
-        can_them.append("file khuôn để chốt khổ trải (bot đang tự tính, xem dòng 🧾)")
+        can_them.append("file khuôn để chốt khổ trải (bot đang tự tính, xem dòng đầu)")
     if any(m.startswith("giấy") or m.startswith("định lượng") for m in md):
         can_them.append("loại giấy, định lượng")
     if any("gia công" in m for m in md):
