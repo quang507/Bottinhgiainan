@@ -9,7 +9,7 @@ import re
 
 NUM = r"\d+(?:[.,]\d+)?"
 DIM = re.compile(rf"({NUM})\s*(?:cm|mm)?\s*[x×*]\s*({NUM})(?:\s*(?:cm|mm)?\s*[x×*]\s*({NUM}))?\s*(mm|cm)?", re.I)
-DON_VI_SL = r"(?:cái|chiếc|hộp|túi|tem|thiệp|thẻ|tấm|tờ|bộ|cuộn|nhãn|pcs|sp|c)\b"
+DON_VI_SL = r"(?:cái|chiếc|hộp|túi|tem|thiệp|thẻ|tấm|tờ|bộ|cuộn|nhãn|pcs|sp|hangtag|tag|decal|sticker|đai|ống|vòng|khay|set|combo|bao|c)\b"
 
 DONG_HANG = [
     ("nhan_det", r"nhãn dệt|mác dệt|woven"),
@@ -20,13 +20,14 @@ DONG_HANG = [
     ("giay_cuon_bo_hang", r"giấy cuộn|bó hàng"),
     ("thung_carton", r"thùng|carton sóng|\d lớp|hộp sóng"),
     ("the_nhua", r"thẻ nhựa"),
+    ("ong_giay", r"ống tròn|ống giấy|hộp trụ|hộp tròn"),
     ("phu_lieu", r"phụ liệu|dây treo thẻ|đạn nhựa|kim băng|kẹp nhựa|bìa lưng|hút ẩm|khuy|dây kéo"),
 ]
 LOAI = [
     ("hop_cung", r"hộp cứng|chipboard|carton lạnh|bìa cứng|bồi carton|nam châm"),
     ("tui_giay", r"\btúi\b"),
     ("tem_decal", r"decal|đề can|tem nhãn|tem dán|sticker|\btem\b"),
-    ("thiep", r"thiệp|card|danh thiếp|thẻ bài|hangtag|hang tag|tag treo|thẻ treo|nhãn treo|\btấm\b|tờ rơi|ấn phẩm"),
+    ("thiep", r"thiệp|card|danh thiếp|thẻ bài|hangtag|hang tag|tag treo|thẻ treo|nhãn treo|\btấm\b|tờ rơi|ấn phẩm|đai giấy|\bđai\b|vòng cổ"),
     ("hop_gap", r"\bhộp\b"),
 ]
 GIAY = [
@@ -39,7 +40,25 @@ GIAY = [
     ("Ford", r"\bfor[dt]\b"),
 ]
 KIEU = r"nắp gài|đáy khóa|đáy khoá|đáy cài|đáy gài|âm dương|nắp rời|bao diêm|nắp kéo|hộp rút|nam châm|hộp gối|móc đáy"
-TU_LA = r"mỹ thuật|metalize|met\b|pantone|pha màu|nhũ bạc|hologram|pvc|pet\b|nhựa|vải|gỗ|lót xốp|khay|định hình|cán vân|7 màu|trong suốt"
+TU_LA = r"mỹ thuật|metalize|met\b|pantone|pha màu|nhũ bạc|hologram|decal nhựa|màng nhựa|hộp nhựa|túi nhựa|nilon|vải|gỗ|lót xốp|cán vân|7 màu"
+
+
+def ket_cau_dac_biet(tin: str, P: dict) -> list:
+    t = (tin or "").lower()
+    return list(dict.fromkeys(v for k, v in P.get("ket_cau_dac_biet", {}).items() if not k.startswith("_") and k in t))
+
+
+def thieu_cua(s: dict) -> list:
+    """Chỉ 3 thứ bắt buộc: loại, kích thước, số lượng. Giấy/màu/gia công thiếu thì dùng mặc định."""
+    thieu = []
+    loai = s.get("loai")
+    if not loai:
+        thieu.append("loại sản phẩm (hộp giấy, hộp cứng, túi, thiệp, thẻ bài, tem decal)")
+    if not s.get("dai") or not s.get("rong") or (loai in ("hop_gap", "hop_cung", "tui_giay") and not s.get("cao")):
+        thieu.append("kích thước (dài × rộng × cao cm)" if loai in ("hop_gap", "hop_cung", "tui_giay", None) else "kích thước (ngang × dọc cm)")
+    if not s.get("so_luong"):
+        thieu.append("số lượng")
+    return thieu
 
 
 def _f(x):
@@ -139,6 +158,11 @@ def phan_tich(tin: str, da_biet: dict = None):
     for ten, key in (("ngang|dài|rộng miệng", "dai"), ("hông|đáy|rộng", "rong"), ("cao", "cao")):
         m = re.search(rf"(?:chiều\s*)?(?:{ten})\s*:?\s*({NUM})\s*(cm|mm)?", t3)
         if m: nhan[key] = _f(m.group(1)) / (10 if m.group(2) == "mm" else 1)
+    m = re.search(rf"(?:đường kính|phi|ø|Ø|đk)\s*:?\s*({NUM})\s*(cm|mm)?", t3)
+    if m and not dims_sp:
+        d = _f(m.group(1)) / (10 if (m.group(2) == "mm" or (not m.group(2) and _f(m.group(1)) > 40)) else 1)
+        nhan = {"dai": d, "rong": d}
+        t3 = t3[:m.start()] + " " + t3[m.end():]
     nhieu_sp = len(dims_sp) > 1
     mm_doan = False
     if dims_sp:
@@ -183,11 +207,11 @@ def phan_tich(tin: str, da_biet: dict = None):
     if s.get("loai") == "tem_decal": s["giay"] = "Decal"
 
     # ---- in ----
-    if re.search(r"không in|khỏi in|trơn không in", t3): s["so_mau"] = 0; moi.add("x")
-    else:
-        m = re.search(r"(\d)\s*màu", t3)
-        if m: s["so_mau"] = int(m.group(1)); moi.add("x")
-        elif re.search(r"in màu|full màu|cmyk", t3): s["so_mau"] = 4; moi.add("x")
+    t_in = re.sub(r"(?:mặt trong|bên trong|ruột|lót|đáy)[^,;.]{0,12}không in", " ", t3)
+    m = re.search(r"(\d)\s*màu", t_in)
+    if m: s["so_mau"] = int(m.group(1)); moi.add("x")
+    elif re.search(r"in màu|full màu|cmyk", t_in): s["so_mau"] = 4; moi.add("x")
+    elif re.search(r"không in|khỏi in|hộp trơn|để trơn", t_in): s["so_mau"] = 0; moi.add("x")
     m = re.search(r"in\s*(?:\d\s*màu\s*)?(\d)\s*mặt|(\d)\s*mặt\s*in", t3)
     if m: s["so_mat"] = int(m.group(1) or m.group(2)); moi.add("x")
 
@@ -229,6 +253,10 @@ def phan_tich(tin: str, da_biet: dict = None):
     if not sl:
         m = re.search(r"(?:mức|mốc)\s*((?:\d[\d.]*\s*(?:,|;|/|và)?\s*)+)", t3)
         if m: sl = [v for v in (_int(x) for x in re.findall(r"\d[\d.]*", m.group(1))) if 10 <= v <= 5_000_000]
+    if not sl:
+        m = re.match(r"\s*(?:báo giá|tính giá|tính giúp|cần|in|làm|đặt|e cần|em cần|a cần|anh cần)?\s*(\d[\d.]*)\s+(?!màu|mặt|gsm|cm|mm|g\b|tr\b|k\b|đ\b|lớp|x\b)[a-zà-ỹ]", t3)
+        if m and 10 <= _int(m.group(1)) <= 5_000_000:
+            sl = [_int(m.group(1))]
     if sl:
         s["so_luong"] = sorted(dict.fromkeys(sl)); moi.add("sl")
 
@@ -250,11 +278,7 @@ def phan_tich(tin: str, da_biet: dict = None):
         if s.get("loai") == "hop_cung" and s.get("kieu_hop"): ten = f"Hộp cứng {s['kieu_hop']}"
         elif s.get("loai") == "hop_gap" and s.get("kieu_hop"): ten = f"Hộp {s['kieu_hop']}" if "hộp" not in s["kieu_hop"] else s["kieu_hop"].capitalize()
         s["san_pham"] = ten
-    thieu = []
-    if not s.get("loai"): thieu.append("loại sản phẩm (hộp giấy, hộp cứng, túi, thiệp, thẻ bài, tem decal)")
-    if not s.get("dai") or not s.get("rong") or (s.get("loai") in ("hop_gap", "hop_cung", "tui_giay") and not s.get("cao")):
-        thieu.append("kích thước (dài × rộng × cao cm)" if s.get("loai") in ("hop_gap", "hop_cung", "tui_giay", None) else "kích thước (ngang × dọc cm)")
-    if not s.get("so_luong"): thieu.append("số lượng")
+    thieu = thieu_cua(s)
     s["thieu"] = thieu
     s["cau_hoi"] = ("Dạ anh/chị cho em xin thêm " + ", ".join(thieu) + " để em báo giá ạ.") if thieu else ""
 

@@ -89,6 +89,8 @@ Quy tắc:
 - 'Cán màng mờ' = can_mo. 'Cán mờ 2 mặt' → can_mo và can_mang_2_mat = true.
 - Khách có thể nhắn nhiều lần: nếu có THÔNG SỐ ĐÃ BIẾT, giữ nguyên các giá trị cũ và chỉ cập nhật/bổ sung từ tin mới. Tin mới ghi 'reset' hoặc sản phẩm hoàn toàn khác thì bỏ thông số cũ.
 - Túi giấy: kích thước là Dài (miệng) × Rộng (hông) × Cao. Nếu ghi 'túi cao 30*25*8' thì 30 là cao, 25 dài, 8 hông → dai=25, rong=8, cao=30. Hộp: 'hộp 13*4*21' → dai=13, rong=4, cao=21 theo thứ tự ghi.
+- 'Hũ nhựa', 'chai', 'lọ', 'sản phẩm bên trong' là thứ khách ĐỰNG trong hộp, không phải dong_hang_khac. the_nhua chỉ khi khách hỏi in thẻ nhựa PVC.
+- 'thieu' chỉ được chứa: loại sản phẩm, kích thước, số lượng. KHÔNG hỏi loại giấy, số màu, gia công (bot có mặc định).
 - Không bịa kích thước hay số lượng. Thiếu thì ghi vào 'thieu' và đặt 1 câu hỏi.
 - Nhiều sản phẩm trong một tin: chọn sản phẩm đầu tiên, ghi các sản phẩm còn lại vào san_pham dạng '... (còn: ...)'.
 - Trường không có thông tin: số → 0 (hoặc -1 nếu mô tả nói vậy), chuỗi → rỗng, danh sách → rỗng. Không đoán.

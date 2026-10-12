@@ -19,12 +19,12 @@ def _grid_plus_strip(W, H, w, h):
     return n + max(phai, duoi)
 
 
-def ups(W, H, w, h, bu_xen=None):
+def ups(W, H, w, h, bu_xen=None, le=None):
     """Số con/tờ: trừ lề kẹp nhíp 1 cạnh, cộng bù xén quanh mỗi con, thử 2 chiều, lưới + dải dư xoay con."""
     if not w or not h:
         return 0
     BB = P.get("binh_bai", {})
-    le = BB.get("le_nhip_cm", 0)
+    le = BB.get("le_nhip_cm", 0) if le is None else le
     bx = BB.get("bu_xen_cm", {}).get("hop_gap", 0) if bu_xen is None else bu_xen
     W2, H2, w2, h2 = W, H - le, w + bx, h + bx
     return max(_grid_plus_strip(W2, H2, w2, h2), _grid_plus_strip(W2, H2, h2, w2), _grid_plus_strip(H2, W2, w2, h2), _grid_plus_strip(H2, W2, h2, w2))
@@ -33,13 +33,13 @@ def ups(W, H, w, h, bu_xen=None):
 CAT_TAI = (0, 0.5, 1.0, 1.5)   # mức bớt tai dán (cm) được phép thử
 
 
-def ups_cat_tai(W, H, w, h, cho_phep=True):
+def ups_cat_tai(W, H, w, h, cho_phep=True, le=None):
     """Trả về (số con, cm đã bớt) – chỉ bớt tai khi nhờ đó thêm được con."""
-    best = (ups(W, H, w, h), 0)
+    best = (ups(W, H, w, h, le=le), 0)
     if not cho_phep:
         return best
     for t in CAT_TAI[1:]:
-        u = max(ups(W, H, w - t, h), ups(W, H, w, h - t), ups(W, H, w - t, h - t))
+        u = max(ups(W, H, w - t, h, le=le), ups(W, H, w, h - t, le=le), ups(W, H, w - t, h - t, le=le))
         if u > best[0]:
             best = (u, t)
     return best
@@ -134,7 +134,7 @@ def nen_in_nhanh(don: DonHang, SL: int) -> bool:
         if not tp.so_mau:
             continue
         kho_ok = [k for k in K["kho_in_nhanh"] if k.get("gia_2_mat" if tp.so_mat == 2 else "gia_1_mat")]
-        u = max((ups(*k["kho"], tp.trai_w, tp.trai_h) for k in kho_ok), default=0)
+        u = max((ups(*k["kho"], tp.trai_w, tp.trai_h, le=K.get("le_cm")) for k in kho_ok), default=0)
         if u == 0:
             return False
         tong_to += SL * tp.con_moi_sp / u
@@ -158,7 +158,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
     tong_nhip = 0.0
     for tp in don.thanh_phan:
         # Chọn khổ theo tổng chi phí giấy + in thấp nhất (bình bài ảo), trừ khi tin đã chỉ định khổ/số con
-        ung_vien = [(don.kho, don.con)] if (don.kho and don.con) else             [((W, H), ups_cat_tai(W, H, tp.trai_w, tp.trai_h, don.loai_sp in ("hop_gap", "tui_giay") and tp.loai not in ("Chipboard", "Decal") and tp.con_moi_sp == 1)) for W, H in (([k["kho"] for k in K["kho_in_nhanh"]]) if (kts and tp.so_mau) else P["kho_giay"])]
+        ung_vien = [(don.kho, don.con)] if (don.kho and don.con) else             [((W, H), ups_cat_tai(W, H, tp.trai_w, tp.trai_h, don.loai_sp in ("hop_gap", "tui_giay") and tp.loai not in ("Chipboard", "Decal") and tp.con_moi_sp == 1, le=(K.get("le_cm") if (kts and tp.so_mau) else None))) for W, H in (([k["kho"] for k in K["kho_in_nhanh"]]) if (kts and tp.so_mau) else P["kho_giay"])]
         ung_vien = [(k, u) for k, u in ung_vien if (u[0] if isinstance(u, tuple) else u)]
         if not ung_vien:
             r.setdefault("vuot_kho", []).append((tp.ten, tp.trai_w, tp.trai_h))
@@ -391,6 +391,9 @@ def dung_don(spec: dict) -> DonHang:
         don.mac_dinh.append(f"{don.thanh_phan[0].so_mat} mặt")
     if not spec.get("gia_cong") and not don.gc_tuy_chinh:
         don.mac_dinh.append("gia công cơ bản (bế, dán)")
+    db = [x for x in (spec.get("ket_cau_dac_biet") or []) if not (x == "cửa sổ" and "cua_so" in don.gia_cong)]
+    if db and don.loai_sp in ("hop_gap", "hop_cung", "tui_giay"):
+        don.uoc_tinh.append("kết cấu đặc biệt (" + ", ".join(db) + ") em tính như hộp thường, cần My xem lại")
     if not don.kho and don.loai_sp in ("hop_gap", "hop_cung", "tui_giay"):
         don.uoc_tinh.append("khổ trải tính từ kích thước (chưa có file khuôn)")
     if don.loai_sp in ("hop_gap", "tui_giay") and don.thanh_phan and don.thanh_phan[0].gsm >= 300 \
@@ -464,8 +467,11 @@ def _dung_don(spec: dict) -> DonHang:
     hai_mieng = any(k in kieu for k in ("âm dương", "nắp rời", "bao diêm", "kéo", "rút"))
     if hai_mieng:
         day_in = 0 if any(k in kieu for k in ("bao diêm", "kéo", "rút")) else mau
-        tp = [ThanhPhan("Nắp", giay, gsm, D + 2 * C + 3, R + 2 * C + 3, 1, mau, 1),
-              ThanhPhan("Đáy", giay, gsm, D + 2 * C + 3, R + 2 * C + 3, 1, day_in, 1)]
+        if day_in == mau:      # nắp và đáy in giống nhau → bình chung 1 bài, 1 bộ kẽm
+            tp = [ThanhPhan("Nắp + đáy", giay, gsm, D + 2 * C + 3, R + 2 * C + 3, 2, mau, 1)]
+        else:
+            tp = [ThanhPhan("Nắp", giay, gsm, D + 2 * C + 3, R + 2 * C + 3, 1, mau, 1),
+                  ThanhPhan("Đáy", giay, gsm, D + 2 * C + 3, R + 2 * C + 3, 1, day_in, 1)]
         kb = 2
         if not any(g.startswith("dan") for g in gc):
             gc.append("dan_tay")
@@ -490,8 +496,7 @@ def _dung_don(spec: dict) -> DonHang:
                 kb = 1
                 ghi_chu = f"nắp gài mở mặt lớn cần khổ trải {w0:g}×{h0:g} (vượt khổ giấy) nên em tính kết cấu {ten_x}"
             elif lot(D + 2 * C + 3, R + 2 * C + 3):
-                tp = [ThanhPhan("Nắp", giay, gsm, D + 2 * C + 3, R + 2 * C + 3, 1, mau, 1),
-                      ThanhPhan("Đáy", giay, gsm, D + 2 * C + 3, R + 2 * C + 3, 1, mau, 1)]
+                tp = [ThanhPhan("Nắp + đáy", giay, gsm, D + 2 * C + 3, R + 2 * C + 3, 2, mau, 1)]
                 kb = 2
                 ghi_chu = "hộp 1 mảnh vượt khổ giấy nên em tính kiểu âm dương 2 mảnh"
                 if not any(g.startswith("dan") for g in gc):
@@ -609,7 +614,8 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
         can_them.append("loại dây quai")
     if any("My chốt" in u for u in uoc):
         can_them.append("đơn giá hộp cứng (chờ My)")
-    khac = [u for u in uoc if "khổ trải" not in u and "My chốt" not in u]
+    khac = [u for u in uoc if "khổ trải" not in u and "My chốt" not in u and "kết cấu đặc biệt" not in u]
+    dac_biet = [u for u in uoc if "kết cấu đặc biệt" in u]
     canh_bao = [m for m in md if "→" in m]
     dong = []
     if can_them:
@@ -618,6 +624,8 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
         dong.append("✅ Đủ thông số.")
     if khac:
         dong.append("Tạm tính: " + "; ".join(khac) + ".")
+    if dac_biet:
+        dong.append("⚠️ " + dac_biet[0][0].upper() + dac_biet[0][1:] + ".")
     if canh_bao:
         dong.append("⚠️ " + " ".join(m.split("→ ", 1)[1] for m in canh_bao))
     L.append(" ".join(dong))

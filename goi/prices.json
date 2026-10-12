@@ -307,8 +307,9 @@
           60
         ],
         "gia_1_mat": 4000,
-        "gia_2_mat": null,
-        "uoc_tinh": true
+        "gia_2_mat": 32000,
+        "uoc_tinh": true,
+        "_ghi_chu": "2 mặt = giá A4 2 mặt của My (10.000 đ) quy theo diện tích: 33×60 ≈ 3,2 tờ A4. 1 mặt 4.000 đ suy từ BG00874."
       },
       {
         "ten": "A4",
@@ -325,7 +326,8 @@
       "hop_gap",
       "hop_cung",
       "tui_giay"
-    ]
+    ],
+    "le_cm": 0.5
   },
   "_hop_cung": "My 12/10/2026: hộp âm dương = 4 thành phần = 4 khuôn bế (áo nắp, áo đáy, carton nắp, carton đáy); công đoạn 4 lần bế + phay rãnh + dựng hộp + bồi hộp. Bồi tính dài×rộng×2.200 đ/m², lô tối thiểu 300k. Nắp kéo (bao diêm): bồi áo hộc cần thợ giỏi, +15k/hộp. Chipboard 2mm tính dài×rộng×định lượng×đơn giá như giấy (đơn giá/tấn chưa cho). Phay rãnh, dựng hộp chưa có đơn giá → ước tính.",
   "cong_in_toi_thieu_theo_mau": {
@@ -482,6 +484,25 @@
     "the_nhua": {
       "ten": "Thẻ nhựa",
       "can": "kích thước, độ dày, in 1 hay 2 mặt, số lượng"
+    },
+    "ong_giay": {
+      "ten": "Hộp ống tròn / ống giấy",
+      "can": "đường kính, chiều cao (cm), độ dày ống, in nhãn quấn mấy màu, nắp giấy hay nắp thiếc, số lượng"
     }
+  },
+  "ket_cau_dac_biet": {
+    "_ghi_chu": "Kết cấu bot chưa có công thức riêng: vẫn tính như hộp thường và ghi rõ để My xem lại.",
+    "quai xách": "quai xách liền thân",
+    "vát chóp": "vát chóp",
+    "khay": "khay/ngăn bên trong",
+    "ngăn": "khay/ngăn bên trong",
+    "nam châm": "nắp bật nam châm (chưa gồm nam châm)",
+    "nắp bật": "nắp bật nam châm (chưa gồm nam châm)",
+    "dây giật": "dây giật",
+    "tự khóa": "tự khóa",
+    "cửa sổ": "cửa sổ",
+    "móc treo": "móc treo",
+    "định hình": "khay định hình",
+    "ruy băng": "ruy băng (chưa gồm dây)"
   }
 }

@@ -114,6 +114,11 @@ def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
             canh_bao = "\n⚠️ AI đang hết hạn mức nên em đọc tin bằng bộ quy tắc. Anh/chị xem lại dòng 📦 có đúng ý không."
     else:
         s = rs
+    # kết cấu đặc biệt: cộng dồn qua các lượt
+    s["ket_cau_dac_biet"] = list(dict.fromkeys(((da_biet or {}).get("ket_cau_dac_biet") or []) + parse_rules.ket_cau_dac_biet(t, engine.P)))
+    s["thieu"] = parse_rules.thieu_cua(s) if not s.get("dong_hang_khac") else []
+    if s["thieu"]:
+        s["cau_hoi"] = "Dạ anh/chị cho em xin thêm " + ", ".join(s["thieu"]) + " để em báo giá ạ."
     if s.get("y_dinh") == "tom_tat" and state.get(chat_id, {}).get("tom_tat"):
         return state[chat_id]["tom_tat"]
     if s.get("y_dinh") == "khac" and not anh and not s.get("so_luong") and not s.get("dai"):
@@ -137,9 +142,7 @@ def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
         return "Em thấy ảnh nhưng chưa rõ cần tính gì. Anh/chị gửi kèm: loại hộp, kích thước, số lượng, giấy, gia công giúp em."
     state[chat_id] = {"spec": s, "luc": time.time()}
     luu_state()
-    thieu = [x for x in s["thieu"]] or [k for k in ("loai", "dai", "rong") if not s.get(k)] or ([] if s["so_luong"] else ["số lượng"])
-    if s["loai"] in ("hop_gap", "hop_cung", "tui_giay") and not s.get("cao"):
-        thieu.append("chiều cao")
+    thieu = s["thieu"]
     if thieu:
         return (s["cau_hoi"] or ("Cho em xin thêm: " + ", ".join(thieu) + " ạ.")) + canh_bao
     don = engine.dung_don(s)
