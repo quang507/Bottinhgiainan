@@ -347,9 +347,6 @@ def dung_don(spec: dict) -> DonHang:
     don.proof = not spec.get("khong_proof")
     don.kts = spec.get("in_kts")
     don.khuon_co_san = bool(spec.get("khuon_co_san"))
-    if don.loai_sp in ("hop_gap", "tui_giay") and don.thanh_phan and don.thanh_phan[0].gsm >= 300 \
-            and not any(g in don.gia_cong for g in ("can_mo", "can_bong")):
-        don.mac_dinh.append("không cán màng → " + P["canh_bao"]["giay_day_khong_can_mang"])
     don.kieu_2_mat = spec.get("kieu_in_2_mat")
     don.ep_kim_kt = tuple(spec["ep_kim_kt"]) if spec.get("ep_kim_kt") else None
     don.dap_noi_kt = tuple(spec["dap_noi_kt"]) if spec.get("dap_noi_kt") else None
@@ -373,6 +370,9 @@ def dung_don(spec: dict) -> DonHang:
         don.mac_dinh.append("gia công cơ bản (bế, dán)")
     if not don.kho:
         don.uoc_tinh.append("khổ trải tính từ kích thước (chưa có file khuôn)")
+    if don.loai_sp in ("hop_gap", "tui_giay") and don.thanh_phan and don.thanh_phan[0].gsm >= 300 \
+            and not any(g in don.gia_cong for g in ("can_mo", "can_bong")):
+        don.mac_dinh.append("không cán màng → " + P["canh_bao"]["giay_day_khong_can_mang"])
     if don.gc_tuy_chinh:
         # gia công đã có đơn giá riêng thì bỏ bản mặc định cùng tên
         ten_tc = " ".join(t.lower() for t, _ in don.gc_tuy_chinh)
