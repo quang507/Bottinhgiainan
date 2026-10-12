@@ -69,6 +69,22 @@ def _int(x):
     return int(re.sub(r"[.,\s]", "", x))
 
 
+# kích thước đứng sau các từ này là vùng gia công, không phải kích thước sản phẩm
+VUNG_GIA_CONG = [("ep_kim_kt", r"ép kim|ép nhũ"), ("dap_noi_kt", r"dập nổi|dập chìm"),
+                 ("cua_so_kt", r"cửa sổ(?=[^,;.\n]{0,12}$)"), ("uv_kt", r"\buv\b(?=[^,;.\n]{0,14}$)")]
+
+
+def _vung_gia_cong(truoc: str, so_chieu: int, ca_tin: str):
+    """Kích thước này thuộc vùng gia công nào: lấy từ khoá đứng gần nhất phía trước. None nếu là kích thước sản phẩm."""
+    gan = [(m.start(), key) for key, mau in VUNG_GIA_CONG for m in re.finditer(mau, truoc)
+           if so_chieu == 2 or key in ("ep_kim_kt", "dap_noi_kt")]
+    if gan:
+        return max(gan)[1]
+    if re.search(r"logo", truoc) and re.search(r"ép kim|ép nhũ", ca_tin):
+        return "ep_kim_kt"
+    return None
+
+
 def _spec_trong():
     return {"san_pham": "", "loai": None, "kieu_hop": None, "dai": None, "rong": None, "cao": None, "so_luong": [],
             "giay": None, "dinh_luong": None, "so_mau": None, "so_mat": None, "gia_cong": [], "thieu": [], "cau_hoi": "",
@@ -147,14 +163,9 @@ def phan_tich(tin: str, da_biet: dict = None):
         a = [_f(x) for x in m.groups()[:3] if x]
         if m.group(4) == "mm" or re.search(r"mm", t2[m.start():m.end() + 3]):
             a = [x / 10 for x in a]
-        if re.search(r"ép kim|ép nhũ", truoc) or (re.search(r"logo", truoc) and re.search(r"ép kim|ép nhũ", t2) and not re.search(r"dập nổi", truoc)):
-            s["ep_kim_kt"] = a[:2]; moi.add("x")
-        elif re.search(r"dập nổi|dập chìm", truoc):
-            s["dap_noi_kt"] = a[:2]; moi.add("x")
-        elif re.search(r"cửa sổ[^,;.\n]{0,12}$", truoc) and len(a) == 2:
-            s["cua_so_kt"] = a[:2]; moi.add("x")
-        elif re.search(r"\buv\b[^,;.\n]{0,14}$", truoc) and len(a) == 2:
-            s["uv_kt"] = a[:2]; moi.add("x")
+        vung = _vung_gia_cong(truoc, len(a), t2)
+        if vung:
+            s[vung] = a[:2]; moi.add("x")
         else:
             dims_sp.append(a)
     t3 = DIM.sub(" ", t2)

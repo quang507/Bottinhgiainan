@@ -94,3 +94,18 @@ if tang and "--no-ai" in sys.argv:
 print(len(CASES), "tin;", co_gia, "ra giá;", len(GOI_AI), "lượt cần AI")
 if "--no-ai" in sys.argv and co_gia < 32:
     print("FAIL: số đơn ra giá giảm còn", co_gia); sys.exit(1)
+
+# hồi quy: kích thước vùng gia công gán đúng từ khoá gần nhất; giá My đã báo thật không lệch quá 12%
+sp, _, _ = parse_rules.phan_tich("1000 hộp nắp gài 10x5x15 ivory 300 cán mờ, ép kim logo 5x3, UV 8x4, cửa sổ 6x10")
+assert (sp["dai"], sp["rong"], sp["cao"]) == (10, 5, 15) and sp["ep_kim_kt"] == [5, 3] and sp["uv_kt"] == [8, 4] and sp["cua_so_kt"] == [6, 10], sp
+GIA_MY = [("100 hộp cứng âm dương 30x12x7 cm bồi chipboard giấy C150 in 4 màu cán mờ", 100, 105000),
+          ("100 hộp cứng nắp kéo 30x25x7 cm chipboard bồi C150 in 4 màu cán mờ", 100, 125000),
+          ("90 hộp lạp xưởng 13x4x21 cm, Ivory 210, in KTS, cán mờ 1 mặt, bồi giấy Ivory 210, bế dán support cửa sổ, xỏ dây", 90, 42000),
+          ("100 thiệp 8x12 cm couche 300 in 2 mặt", 100, 2500)]
+for tin, sl, gia_my in GIA_MY:
+    sp, _, _ = parse_rules.phan_tich(tin)
+    sp["ket_cau_dac_biet"] = []
+    gia = engine.tinh(engine.dung_don(sp), sl)["gia_ban_tron"]
+    if abs(gia / gia_my - 1) > 0.12:
+        print(f"FAIL: lệch giá My quá 12%: {tin[:50]} bot {gia:,.0f} vs My {gia_my:,}"); sys.exit(1)
+print("Đối chiếu 4 giá My đã báo: trong ±12%")

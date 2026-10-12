@@ -14,7 +14,7 @@ Nhắn yêu cầu vào bot (hoặc @tag bot trong nhóm) → bot bóc tách quy 
   - `tinh_gia.py` tính giá vốn và giá bán theo 6 bước
   - `soan_tin.py` soạn tin: bản nội bộ và bản gửi khách
 - `goi/prices.json` – bảng giá xưởng, mỗi mục có ghi chú nguồn. Sửa file này rồi `systemctl restart goi-bot`.
-- `tests/` – `smoke.py` chạy trước mỗi lần deploy: `e2e.py` (31 tin hội thoại), `sku21.py` (21 SKU GÓI + đơn thật, kiểm giá không tăng theo số lượng), đối chiếu Excel. `golden.py` chụp/so 1.400 đơn mẫu khi cần sửa cấu trúc code mà không đổi kết quả.
+- `tests/` – `smoke.py` chạy trước mỗi lần deploy: `e2e.py` (31 tin hội thoại), `sku21.py` (21 SKU GÓI + đơn thật, kiểm giá bán không tăng theo số lượng và không lệch quá 12% so với 4 giá My đã báo), đối chiếu Excel. `golden.py` chụp/so 1.400 đơn mẫu khi cần sửa cấu trúc code mà không đổi kết quả.
 - `deploy.sh` – kiểm tra cú pháp, chạy test, đẩy lên VPS, commit.
 - `index.html` – trang tính giá thủ công theo đúng Excel của My.
 
@@ -40,4 +40,4 @@ systemctl enable --now goi-bot && journalctl -u goi-bot -f
 | CTP | số màu × số mặt × 110.000 |
 | Giá bán | (vật tư × 1,05 vận chuyển) × (1 + lợi nhuận) ÷ SL, làm tròn lên 1.000 |
 
-Hộp cứng bồi chipboard: chipboard đ/tờ, công bồi tay, in KTS lô nhỏ là **ước tính** cho đến khi My chốt.
+Các quy tắc My bổ sung ngoài Excel (hộp cứng, in nhanh, gia công, lãi theo loại) nằm trong `goi/prices.json`, mỗi mục có `_ghi_chu` nguồn. Khoản nào My chưa chốt thì tin trả lời ghi "Tạm tính" hoặc "chờ My".
