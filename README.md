@@ -4,12 +4,19 @@ Zalo Bot báo giá bao bì theo đúng công thức **Báo giá My.xlsx** (xư�
 Nhắn yêu cầu vào bot (hoặc @tag bot trong nhóm) → bot bóc tách quy cách, hỏi lại nếu thiếu, rồi báo giá 3 bậc số lượng.
 
 ## Cấu trúc
-- `bot.py` – vòng lặp long-polling Zalo Bot API (`getUpdates` / `sendMessage`), nhớ thông số theo từng chat trong `state.json`.
-- `goi/extract.py` – Claude bóc tách tin nhắn thành JSON (chỉ bóc tách, không tính tiền).
-- `goi/engine.py` – công thức tính giá (giấy, công in theo bậc, kẽm, gia công, khuôn, vận chuyển, lợi nhuận). Chạy `python -m goi.engine` để đối chiếu với Excel.
-- `goi/prices.json` – bảng giá xưởng. Sửa file này rồi `systemctl restart goi-bot`.
-- `index.html` – trang tính giá thủ công, mở trực tiếp bằng trình duyệt.
-- `deploy/goi-bot.service` – unit systemd cho VPS.
+- `bot.py` – vòng lặp Zalo Bot API (`getUpdates` / `sendMessage`), nhớ thông số theo từng chat trong `state.json`.
+- `goi/parse_rules.py` – đọc tin nhắn bằng bộ quy tắc (không cần AI). Tin rõ ràng đi đường này, trả lời tức thì.
+- `goi/extract.py` – AI bóc tách (Gemini trước, Claude Haiku dự phòng) cho tin lộn xộn, nhiều sản phẩm, hoặc có ảnh. AI chỉ bóc tách, không tính tiền.
+- `goi/engine.py` – cửa vào của phần tính giá, gom 5 module:
+  - `bang_gia.py` bảng giá (`prices.json`) và đặc tính từng loại sản phẩm
+  - `binh_bai.py` một tờ giấy xếp được mấy con
+  - `san_pham.py` dựng đơn hàng từ thông số, mỗi loại sản phẩm một hàm
+  - `tinh_gia.py` tính giá vốn và giá bán theo 6 bước
+  - `soan_tin.py` soạn tin: bản nội bộ và bản gửi khách
+- `goi/prices.json` – bảng giá xưởng, mỗi mục có ghi chú nguồn. Sửa file này rồi `systemctl restart goi-bot`.
+- `tests/` – `smoke.py` chạy trước mỗi lần deploy: `e2e.py` (31 tin hội thoại), `sku21.py` (21 SKU GÓI + đơn thật, kiểm giá không tăng theo số lượng), đối chiếu Excel. `golden.py` chụp/so 1.400 đơn mẫu khi cần sửa cấu trúc code mà không đổi kết quả.
+- `deploy.sh` – kiểm tra cú pháp, chạy test, đẩy lên VPS, commit.
+- `index.html` – trang tính giá thủ công theo đúng Excel của My.
 
 ## Lệnh trong chat
 `reset` – đơn mới · `giá` – xem bảng giá đang dùng · `help` – hướng dẫn.

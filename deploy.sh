@@ -3,7 +3,7 @@
 set -e
 cd "$(dirname "$0")"
 VPS=root@103.126.162.93
-python -X utf8 -m py_compile bot.py goi/engine.py goi/extract.py goi/parse_rules.py
+python -X utf8 -m py_compile bot.py goi/*.py tests/*.py
 python -X utf8 -m goi.engine | tail -1 | grep -q "KHỚP EXCEL"
 [ -n "$SKIP_SMOKE" ] || python -X utf8 tests/smoke.py
 ssh $VPS 'mkdir -p /opt/goi-bot/goi /opt/goi-bot/deploy'
