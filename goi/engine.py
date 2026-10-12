@@ -490,7 +490,7 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     tp0 = don.thanh_phan[0] if don.thanh_phan else None
     def ten_giay(tp):
         return "Decal giấy" if tp.loai == "Decal" else f"{tp.loai} {tp.gsm}g"
-    quy_cach = f"{ten_giay(tp0)}, in {tp0.so_mau} màu {tp0.so_mat} mặt" if tp0 else ""
+    quy_cach = (f"{ten_giay(tp0)}, " + (f"in {tp0.so_mau} màu {tp0.so_mat} mặt" if tp0.so_mau else "không in")) if tp0 else ""
     gc = [P["gia_cong"][g]["ten"] for g in don.gia_cong if g in P["gia_cong"]] + [f"{t} {fmt(g)}đ" for t, g in don.gc_tuy_chinh]
     ten = don.ten if (kt and kt.replace("×", "x") in don.ten.replace("×", "x").replace(".0", "")) else f"{don.ten} {kt} cm"
     L = [f"📦 {ten} · {quy_cach}" + (" · " + ", ".join(gc) if gc else "")]
@@ -503,7 +503,7 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     boc = " · ".join(f"{t.split(' (')[0].replace('Công in', 'in').replace(' thành phẩm', '')} {fmt_k(v)}" for t, v in r0["dong"] if v)
     L.append(f"🧾 @{fmt(r0['SL'])}: {boc}. Cố định {fmt_k(r0['co_dinh'])} = {fmt_k(r0['co_dinh'] / r0['SL'])}/cái.")
     khac = tinh(don, r0["SL"], kts=not r0["kts"])
-    if r0.get("niem_yet"):
+    if r0.get("niem_yet") or not any(tp.so_mau for tp in don.thanh_phan):
         kha_thi = None
     else:
         kha_thi = r0["kts"] or all(max(ups(*k["kho"], tp.trai_w, tp.trai_h) for k in P["don_kts"]["kho_in_nhanh"]) for tp in don.thanh_phan if tp.so_mau)
