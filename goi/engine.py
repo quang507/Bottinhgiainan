@@ -126,14 +126,31 @@ class DonHang:
     can_mang_2_mat: bool = False
 
 
+def gia_in_nhanh_to(W, H, so_mau, so_mat):
+    """Tiền in nhanh 1 tờ theo bảng My: số bản in theo chiều dài tờ × đơn giá × số mặt (chưa gồm giấy, khấu hao máy)."""
+    B = P["don_kts"]["bang_in"]
+    dai = max(W, H)
+    ban = next((n for gioi_han, n in B["so_ban_in_theo_chieu_dai_cm"] if dai <= gioi_han), None)
+    if ban is None:
+        return None
+    return ban * B["don_gia_ban_in"]["trang_den" if so_mau == 1 else "mau"] * so_mat
+
+
+def giay_in_nhanh_duoc(tp) -> bool:
+    gh = P["don_kts"].get("giay_cho_phep_gsm", {})
+    return tp.loai in gh and tp.gsm <= gh[tp.loai]
+
+
 def nen_in_nhanh(don: DonHang, SL: int) -> bool:
-    """Quy tắc My: dưới 500 tờ và mọi thành phần in lọt khổ 33×60 thì in nhanh."""
+    """In nhanh được khi mọi thành phần có in lọt khổ in nhanh và giấy nằm trong mức máy nhận."""
     K = P["don_kts"]
     tong_to = 0
     for tp in don.thanh_phan:
         if not tp.so_mau:
             continue
-        kho_ok = [k for k in K["kho_in_nhanh"] if k.get("gia_2_mat" if tp.so_mat == 2 else "gia_1_mat")]
+        if not giay_in_nhanh_duoc(tp):
+            return False
+        kho_ok = K["kho_in_nhanh"]
         u = max((ups(*k["kho"], tp.trai_w, tp.trai_h, le=K.get("le_cm")) for k in kho_ok), default=0)
         if u == 0:
             return False
@@ -176,19 +193,11 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             gt = (W * H * tp.gsm * don.gia_giay / 10000) if (don.gia_giay and tp.loai not in ("Chipboard", "Decal")) else gia_to(W, H, tp.loai, tp.gsm)
             phuong_an = []
             if kts:
-                kk = next((k for k in K["kho_in_nhanh"] if k["kho"] == [W, H]), None)
-                gia_to_in = (kk["gia_2_mat"] if tp.so_mat == 2 else kk["gia_1_mat"]) if kk else None
-                if gia_to_in is None and tp.so_mau:
-                    continue   # khổ này không in được số mặt yêu cầu
-                if tp.so_mau and kk:
-                    tien_in = so_to * gia_to_in
-                    if kk.get("uoc_tinh") or (tp.so_mat != 2 and kk.get("uoc_tinh_1_mat")):
-                        nhan_kts = f"in KTS {kk['ten']} {fmt(gia_to_in)}đ/tờ (ước tính)"
-                    else:
-                        nhan_kts = f"in KTS {kk['ten']} {fmt(gia_to_in)}đ/tờ {tp.so_mat} mặt"
-                else:
-                    tien_in, nhan_kts = 0, ""
-                phuong_an.append((so_to * gt + tien_in, u, so_to, tien_in, 0, nhan_kts))
+                gia_to_in = gia_in_nhanh_to(W, H, tp.so_mau, tp.so_mat) if tp.so_mau else 0
+                if gia_to_in is None:
+                    continue   # tờ dài quá mức máy in nhanh
+                tien_in = so_to * gia_to_in
+                phuong_an.append((so_to * gt + tien_in, u, so_to, tien_in, 0, ""))
             elif tp.so_mat == 2 and tp.so_mau:
                 # AB: 2 bộ kẽm, đủ con/tờ, 2 tay in
                 if don.kieu_2_mat in (None, "AB"):
@@ -268,8 +277,9 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             tien = g["gia"]
         elif g["don_vi"] == "nhip":
             rate = next((rt for nguong, rt in g["bac_nhip"] if tong_nhip < nguong), g["gia_toi_thieu"])
-            tien = max(tong_nhip * rate, g.get("san", 0))
-            nhan = f"{g['ten']} ({fmt(tong_nhip)} nhịp × {rate}đ)"
+            san = g["san_moi_khuon"] * max(don.khuon_be, 1) if g.get("san_moi_khuon") else g.get("san", 0)
+            tien = max(tong_nhip * rate, san)
+            nhan = f"{g['ten']} ({fmt(tong_nhip)} nhịp × {rate}đ" + (f", tối thiểu {max(don.khuon_be, 1)} lô" if tien == san and g.get("san_moi_khuon") else "") + ")"
         elif g["don_vi"] == "mep":
             tien = max(SL * g["gia"] * don.so_mep_dan, g.get("san", 0))
             nhan = f"{g['ten']} ({don.so_mep_dan} mép × {g['gia']}đ)"
@@ -303,6 +313,11 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             r["co_dinh"] += khuon_gc
         if g.get("uoc_tinh") and not (don.loai_sp == "hop_cung" and key in ("phay_ranh", "dung_hop")):
             r["uoc_tinh"].append(f"đơn giá {g['ten'].lower()}")
+    if kts and any(tp.so_mau for tp in don.thanh_phan):
+        r["uoc_tinh"].append("tiền in nhanh theo bảng My, chưa gồm khấu hao máy")
+        qua = [f"{tp.loai} {tp.gsm}g" for tp in don.thanh_phan if tp.so_mau and not giay_in_nhanh_duoc(tp)]
+        if qua:
+            r["uoc_tinh"].append("máy in nhanh chỉ nhận Couche ≤300g, Ivory/Bristol ≤250g; " + ", ".join(qua) + " cần My xem")
     if kts:      # lô in nhanh: mỗi nhóm công đoạn tối thiểu 300k (sổ tay My)
         for ten, f in K["phi_lo"].items():
             co = [k for k in f["thay_cho"] if k in tien_gc]
@@ -343,9 +358,20 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         tp = don.thanh_phan[0]
         ny = gia_niem_yet_decal(tp.trai_w - 0.4, tp.trai_h - 0.4, SL)
         if ny:
+            r["niem_yet_nguon"] = "bảng decal offset của My (cán bóng, cắt thành phẩm, nội suy theo kích thước)"
             r["niem_yet"] = ny
             r["gia_ban_tron"] = math.ceil(ny / 10) * 10
             r["gia_ban"] = ny
+    TA = K.get("thiep_a4_2_mat")
+    if (kts and TA and don.loai_sp == "thiep" and don.thanh_phan and don.thanh_phan[0].so_mau and don.thanh_phan[0].so_mat == 2
+            and "be" not in don.gia_cong and don.pct_ln is None):
+        tp = don.thanh_phan[0]
+        u_a4 = ups(21, 29.7, tp.trai_w, tp.trai_h, bu_xen=0, le=K.get("le_cm"))
+        if u_a4:
+            ny = math.ceil(SL / u_a4) * TA["gia_ban_moi_to"] / SL
+            r["niem_yet"], r["gia_ban"] = ny, ny
+            r["niem_yet_nguon"] = f"giá My cho thiệp in nhanh: 10.000 đ một tờ A4 in 2 mặt, {u_a4} con/tờ"
+            r["gia_ban_tron"] = math.ceil(ny / 100) * 100
     return r
 
 
@@ -368,6 +394,8 @@ def dung_don(spec: dict) -> DonHang:
         don.khuon_be_tien = spec["khuon_be_nghin"] * 1000
     don.proof = not spec.get("khong_proof")
     don.kts = spec.get("in_kts")
+    if don.kts is None and (spec.get("loai") == "hop_cung"):
+        don.kts = False            # báo giá thật của My: hộp cứng in offset
     don.khuon_co_san = bool(spec.get("khuon_co_san"))
     don.kieu_2_mat = spec.get("kieu_in_2_mat")
     don.ep_kim_kt = tuple(spec["ep_kim_kt"]) if spec.get("ep_kim_kt") else None
@@ -586,7 +614,8 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
         L.append(f"🔹 {fmt(r['SL'])} cái: giá bán {fmt(r['gia_ban_tron'])} đ/cái · tổng {fmt(r['gia_ban_tron'] * r['SL'])} đ ({che_do}{duoi.strip('()')})")
     r0 = ket_qua[0]
     if any(r.get("niem_yet") for r in ket_qua):
-        L.append("📋 Giá bán theo bảng decal offset của My (cán bóng, cắt TP, nội suy theo kích thước); vốn bên dưới chỉ để tham khảo.")
+        nguon = next((r.get("niem_yet_nguon") for r in ket_qua if r.get("niem_yet_nguon")), "bảng giá My")
+        L.append(f"📋 Giá bán theo {nguon}; chi phí bên dưới chỉ để tham khảo.")
     boc = " · ".join(f"{t.split(' (')[0].replace('Công in', 'in').replace(' thành phẩm', '')} {fmt_k(v)}" for t, v in r0["dong"] if v)
     co_san = " Khuôn có sẵn nên không tính tiền khuôn." if getattr(don, "khuon_co_san", False) and don.khuon_be else ""
     cd = f" Cố định {fmt_k(r0['co_dinh'])} = {fmt_k(r0['co_dinh'] / r0['SL'])}/cái." if r0["co_dinh"] else ""
@@ -596,8 +625,11 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
         kha_thi = None
     else:
         kha_thi = r0["kts"] or all(max(ups(*k["kho"], tp.trai_w, tp.trai_h) for k in P["don_kts"]["kho_in_nhanh"]) for tp in don.thanh_phan if tp.so_mau)
-    if kha_thi is None:
+    giay_khong_duoc = [f"{tp.loai} {tp.gsm}g" for tp in don.thanh_phan if tp.so_mau and not giay_in_nhanh_duoc(tp)]
+    if kha_thi is None or don.loai_sp == "hop_cung":
         pass
+    elif giay_khong_duoc and not r0["kts"]:
+        L.append(f"🔁 {giay_khong_duoc[0]} vượt mức máy in nhanh nhận nên in offset.")
     elif kha_thi:
         L.append(f"🔁 Nếu {'offset' if r0['kts'] else 'in nhanh'} @{fmt(r0['SL'])}: vốn {fmt(khac['gia_von'])}, bán {fmt(khac['gia_ban_tron'])}. (Ghi 'in offset'/'in KTS' để chọn.)")
     else:

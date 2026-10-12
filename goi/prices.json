@@ -8,9 +8,8 @@
     "Bristol": 19,
     "Ivory": 17,
     "Ford": 21,
-    "Chipboard": 5.3
+    "Chipboard": 13.0
   },
-  "chipboard_gia_to_65x86": 3560,
   "decal_gia_m2": 11000,
   "kho_giay": [
     [
@@ -194,7 +193,9 @@
           450
         ]
       ],
-      "san": 300000
+      "san": 300000,
+      "san_moi_khuon": 300000,
+      "_ghi_chu": "Hộp cứng 4 khuôn = 4 lô bế, mỗi lô tối thiểu 300k (My: bế 750đ/nhịp, 1 lô ít nhất 300k)."
     },
     "phay_ranh": {
       "ten": "Phay rãnh chipboard",
@@ -257,7 +258,7 @@
     500
   ],
   "don_kts": {
-    "_ghi_chu": "In nhanh (KTS): chỉ khác offset ở tiền in theo tờ (không kẽm, không proof), sửa bài 5 tờ, khổ in nhanh. Gia công và khuôn tính như thường; 'phi_lo' là mức TỐI THIỂU mỗi nhóm công đoạn cho một lô (theo sổ tay My BG00874: cán, bế, bồi, dán, support mỗi khoản 300k). Khuôn 1.000k trong BG00874 là cho 2 khuôn của 3 mẫu hộp, không phải giá khuôn cố định. Quy tắc My: lọt khổ 33×60 thì in nhanh được, vượt thì buộc offset; bot chọn cách rẻ hơn.",
+    "_ghi_chu": "In nhanh (KTS): tiền in theo bảng My (561 đ/bản in màu, 247 đ trắng đen; ≤35,4cm 1 bản, ≤48,7cm 2 bản, ≤120cm 4 bản), chưa gồm khấu hao máy. Chỉ nhận Couche ≤300g, Ivory/Bristol ≤250g. Gia công và khuôn tính như thường; 'phi_lo' là mức tối thiểu mỗi nhóm công đoạn (sổ tay BG00874). Bot chọn cách rẻ hơn giữa in nhanh và offset.",
     "tu_sua_bai": 5,
     "phi_lo": {
       "Cán màng (lô)": {
@@ -297,33 +298,72 @@
       }
     },
     "pct_loi_nhuan": 0.3,
-    "nguong_to": 500,
     "kho_in_nhanh": [
-      {
-        "ten": "33×60",
-        "kho": [
-          33,
-          60
-        ],
-        "gia_1_mat": 4000,
-        "gia_2_mat": 32000,
-        "uoc_tinh": true,
-        "_ghi_chu": "2 mặt = giá A4 2 mặt của My (10.000 đ) quy theo diện tích: 33×60 ≈ 3,2 tờ A4. 1 mặt 4.000 đ suy từ BG00874."
-      },
       {
         "ten": "A4",
         "kho": [
           21,
           29.7
-        ],
-        "gia_1_mat": 6000,
-        "gia_2_mat": 10000,
-        "uoc_tinh_1_mat": true
+        ]
+      },
+      {
+        "ten": "A3",
+        "kho": [
+          29.7,
+          42
+        ]
+      },
+      {
+        "ten": "33×48",
+        "kho": [
+          33,
+          48
+        ]
+      },
+      {
+        "ten": "33×60",
+        "kho": [
+          33,
+          60
+        ]
       }
     ],
-    "le_cm": 0.5
+    "le_cm": 0.5,
+    "bang_in": {
+      "_ghi_chu": "Bảng tính tiền in nhanh (KTS) trên giấy của My, ảnh gửi 12/10/2026. Giá mỗi BẢN IN, mỗi mặt; CHƯA gồm tiền giấy và khấu hao máy. Số bản in theo chiều dài tờ.",
+      "don_gia_ban_in": {
+        "mau": 561,
+        "trang_den": 247
+      },
+      "so_ban_in_theo_chieu_dai_cm": [
+        [
+          35.4,
+          1
+        ],
+        [
+          48.7,
+          2
+        ],
+        [
+          120.0,
+          4
+        ]
+      ]
+    },
+    "giay_cho_phep_gsm": {
+      "_ghi_chu": "My: Couche ≤300gsm; Ivory và Bristol ≤250gsm. Decal: suy từ việc My in KTS decal.",
+      "Couche": 300,
+      "Couche Matt": 300,
+      "Ivory": 250,
+      "Bristol": 250,
+      "Decal": 999
+    },
+    "thiep_a4_2_mat": {
+      "_ghi_chu": "My 12/10 (câu 12): thiệp lô nhỏ in KTS, 1 tờ A4 in 2 mặt tính 10.000 đ/tờ rồi dàn kích thước ra GIÁ BÁN.",
+      "gia_ban_moi_to": 10000
+    }
   },
-  "_hop_cung": "My 12/10/2026: hộp âm dương = 4 thành phần = 4 khuôn bế (áo nắp, áo đáy, carton nắp, carton đáy); công đoạn 4 lần bế + phay rãnh + dựng hộp + bồi hộp. Bồi tính dài×rộng×2.200 đ/m², lô tối thiểu 300k. Nắp kéo (bao diêm): bồi áo hộc cần thợ giỏi, +15k/hộp. Chipboard 2mm tính dài×rộng×định lượng×đơn giá như giấy (đơn giá/tấn chưa cho). Phay rãnh, dựng hộp chưa có đơn giá → ước tính.",
+  "_hop_cung": "Đối chiếu 4 báo giá thật BG00865 (12/10/2026): chipboard 1.780 đ/miếng 44×26 theo sổ tay My ≈ 13 tr/tấn loại 1200g; hộp cứng mặc định IN OFFSET (PDF My ghi 'In offset 4 màu'); bế 4 khuôn = 4 lô × tối thiểu 300k. Sau 3 sửa này bot lệch −2% đến +7% so với giá My. My 12/10: 4 thành phần = 4 khuôn; bồi 2.200 đ/m², lô tối thiểu 300k; nắp kéo +15k/hộp. Phay rãnh, dựng hộp chưa có đơn giá riêng → ước tính.",
   "cong_in_toi_thieu_theo_mau": {
     "1": 600000,
     "2": 900000,
