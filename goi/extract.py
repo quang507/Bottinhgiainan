@@ -58,7 +58,10 @@ class Spec(BaseModel):
 
 SYSTEM = """Bạn là nhân viên xưởng in bao bì GÓI, nhiệm vụ DUY NHẤT là bóc tách yêu cầu in ấn thành thông số có cấu trúc.
 Quy tắc:
-- Kích thước ghi dạng 30x25x5 là Dài×Rộng×Cao cm. Nếu ghi mm thì đổi sang cm. '12x35x7' với hộp dài: dài là số lớn nhất.
+- Quy ước kích thước:
+  • Hộp / thùng (sản phẩm khối): Dài × Rộng × Cao đúng thứ tự khách ghi (L×W×H). 'hộp 13x4x21' → dai=13, rong=4, cao=21. 'hộp dài 35x12x7' → dai=35, rong=12, cao=7. Ghi mm thì đổi sang cm.
+  • Ấn phẩm phẳng (thiệp, card, tem, tờ rơi): Ngang × Dọc → dai=ngang, rong=dọc, cao=0. 'thiệp 8x12' → dai=8, rong=12.
+  • Túi giấy: dai = ngang (miệng túi), rong = hông (đáy), cao = chiều cao. Nếu tin ghi rõ từ 'cao', 'hông', 'ngang' thì theo chữ. Nếu chỉ có 3 số không chú thích: hông = số nhỏ nhất, cao = số lớn nhất, ngang = số còn lại. 'túi cao 30*25*8' → cao=30, dai=25, rong=8.
 - 'Chipboard', 'bìa cứng', 'carton lạnh', 'hộp cứng', 'bồi' → loai = hop_cung; giấy áo thường là Couche 150.
 - 'Hộp gập', 'nắp gài', 'Ivory', 'hộp giấy' thường → hop_gap.
 - 'Cán màng mờ' = can_mo. 'Cán mờ 2 mặt' → can_mo và can_mang_2_mat = true.
