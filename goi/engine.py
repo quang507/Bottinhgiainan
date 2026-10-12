@@ -218,7 +218,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         if tien_in:
             r["dong"].append(((f"In KTS {fmt(so_to)} tờ" if kts else f"Công in {tp.so_mau} màu {tp.so_mat} mặt") + f" {tp.ten.lower()}", tien_in))
         tong += tien_giay + tien_in
-        if tp.uoc_tinh:
+        if tp.uoc_tinh and don.loai_sp != "hop_cung":
             r["uoc_tinh"].append(tp.ten)
     ctp = kem * P["gia_kem"]
     if ctp:
@@ -280,7 +280,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             r["dong"].append(("Khuôn " + nhan.split(" (")[0].lower(), khuon_gc))
             tong += khuon_gc
             r["co_dinh"] += khuon_gc
-        if g.get("uoc_tinh"):
+        if g.get("uoc_tinh") and don.loai_sp != "hop_cung":
             r["uoc_tinh"].append(g["ten"])
     if kts:
         for ten, f in K["phi_lo"].items():
@@ -288,7 +288,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
                 r["dong"].append((ten, f["gia"]))
                 tong += f["gia"]
                 r["co_dinh"] += f["gia"]
-        r["uoc_tinh"].append("đơn số ít tính theo phí trọn gói lô in KTS")
+        r["uoc_tinh"].append("phí lô in nhanh")
     if don.khuon_be:
         if don.khuon_be_tien is not None:
             kb = don.khuon_be_tien
@@ -361,7 +361,7 @@ def dung_don(spec: dict) -> DonHang:
     if not spec.get("gia_cong") and not don.gc_tuy_chinh:
         don.mac_dinh.append("gia công cơ bản (bế, dán)")
     if not don.kho:
-        don.uoc_tinh.append("khổ trải tính từ kích thước, có file khuôn sẽ chính xác hơn")
+        don.uoc_tinh.append("khổ trải tính từ kích thước (chưa có file khuôn)")
     if don.gc_tuy_chinh:
         # gia công đã có đơn giá riêng thì bỏ bản mặc định cùng tên
         ten_tc = " ".join(t.lower() for t, _ in don.gc_tuy_chinh)
@@ -391,7 +391,7 @@ def _dung_don(spec: dict) -> DonHang:
             gc.append("boi_nap_keo")
         ten_hc = ten or ("Hộp cứng nắp kéo (bao diêm)" if nap_keo else "Hộp cứng âm dương / nắp rời")
         # 4 khuôn bế: áo nắp, áo đáy, carton nắp, carton đáy (theo My)
-        return DonHang(ten_hc, tp, gc, khuon_be=4, uoc_tinh=["chipboard đ/tờ, phay rãnh, dựng hộp, bồi tay chờ My chốt"])
+        return DonHang(ten_hc, tp, gc, khuon_be=4, uoc_tinh=["chipboard, phay rãnh, dựng hộp chờ My chốt"])
     if loai == "thiep":
         w, h = (D or 8), (R or 12)
         tp = [ThanhPhan("Thiệp", giay, gsm, w + 0.6, h + 0.6, 1, mau, mat if spec.get("so_mat") else 2)]
@@ -436,38 +436,46 @@ def fmt_vn(n):
     return f"{n:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
 
 
+def fmt_k(n):
+    """Tiền gọn: 1,6tr · 432k · 950đ."""
+    if n >= 1_000_000:
+        v = n / 1_000_000
+        return (f"{v:.1f}".rstrip("0").rstrip(".") + "tr").replace(".", ",")
+    if n >= 1000:
+        return f"{round(n / 1000)}k"
+    return f"{n:,.0f}đ".replace(",", ".")
+
+
 def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
-    kt = " × ".join(str(x) for x in (spec.get("dai"), spec.get("rong"), spec.get("cao")) if x)
-    L = [f"📦 {don.ten}" + (f" {kt} cm" if kt else "")]
-    L.append("• " + "; ".join(f"{tp.ten}: {tp.loai} {tp.gsm}g" for tp in don.thanh_phan))
-    gc_ten = [P["gia_cong"][g]["ten"] for g in don.gia_cong if g in P["gia_cong"]] + [f"{t} {fmt(g)}đ" for t, g in don.gc_tuy_chinh]
-    if gc_ten:
-        L.append("• Gia công: " + ", ".join(gc_ten))
-    L.append("")
-    L.append(f"💰 BÁO GIÁ (chưa VAT {int(P['vat'] * 100)}%, chưa gồm vận chuyển tới khách; KTS = in nhanh phí trọn gói lô)")
+    """Một tin Zalo gọn: quy cách · giá 3 mức · bóc tách 1 dòng · so sánh · ước tính/mặc định · chính sách."""
+    kt = "×".join(str(x) for x in (spec.get("dai"), spec.get("rong"), spec.get("cao")) if x)
+    tp0 = don.thanh_phan[0] if don.thanh_phan else None
+    quy_cach = f"{tp0.loai} {tp0.gsm}g, in {tp0.so_mau} màu {tp0.so_mat} mặt" if tp0 else ""
+    gc = [P["gia_cong"][g]["ten"] for g in don.gia_cong if g in P["gia_cong"]] + [f"{t} {fmt(g)}đ" for t, g in don.gc_tuy_chinh]
+    L = [f"📦 {don.ten} {kt} cm · {quy_cach}" + (" · " + ", ".join(gc) if gc else "")]
     for r in ket_qua:
-        L.append(f"🔹 {fmt(r['SL'])} cái ({'KTS' if r['kts'] else 'offset'}): {fmt(r['gia_ban_tron'])} đ/cái · tổng {fmt(r['gia_ban_tron'] * r['SL'])} đ "
-                 f"(chi phí {fmt(r['chi_phi'])} đ = {fmt_vn(r['gia_von'])} đ/cái, lãi {int(round(r['pct_ln'] * 100))}%)")
+        L.append(f"🔹 {fmt(r['SL'])} cái ({'KTS' if r['kts'] else 'offset'}): {fmt(r['gia_ban_tron'])} đ/cái · {fmt(r['gia_ban_tron'] * r['SL'])} đ "
+                 f"(vốn {fmt(r['gia_von'])}, lãi {int(round(r['pct_ln'] * 100))}%)")
     r0 = ket_qua[0]
-    L.append("")
-    L.append(f"📌 Chi phí cố định (kẽm, công in tối thiểu, khuôn): {fmt(r0['co_dinh'])} đ "
-             f"= {fmt(r0['co_dinh'] / r0['SL'])} đ/cái ở mức {fmt(r0['SL'])} cái.")
-    L.append("🧾 Bóc tách @" + fmt(r0["SL"]) + ": " + "; ".join(f"{t} {fmt(v)}" for t, v in r0["dong"] if v) + ".")
+    boc = " · ".join(f"{t.split(' (')[0].replace('Công in', 'in').replace(' thành phẩm', '')} {fmt_k(v)}" for t, v in r0["dong"] if v)
+    L.append(f"🧾 @{fmt(r0['SL'])}: {boc}. Cố định {fmt_k(r0['co_dinh'])} = {fmt_k(r0['co_dinh'] / r0['SL'])}/cái.")
     khac = tinh(don, r0["SL"], kts=not r0["kts"])
     kha_thi = r0["kts"] or all(max(ups(*k["kho"], tp.trai_w, tp.trai_h) for k in P["don_kts"]["kho_in_nhanh"]) for tp in don.thanh_phan if tp.so_mau)
-    if not kha_thi:
-        L.append("🔁 Khổ trải vượt 33×60 cm nên bắt buộc in offset.")
+    if kha_thi:
+        L.append(f"🔁 Nếu {'offset' if r0['kts'] else 'in nhanh'} @{fmt(r0['SL'])}: vốn {fmt(khac['gia_von'])}, bán {fmt(khac['gia_ban_tron'])}. (Ghi 'in offset'/'in KTS' để chọn.)")
     else:
-        L.append(f"🔁 Nếu {'in offset' if r0['kts'] else 'in KTS'} ở mức {fmt(r0['SL'])} cái: chi phí {fmt(khac['gia_von'])} đ/cái, bán {fmt(khac['gia_ban_tron'])} đ/cái. Ghi 'in offset' hoặc 'in KTS' trong tin để chọn.")
-    if r0["mac_dinh"]:
-        L.append("ℹ️ Mặc định đã dùng (khách chưa nói): " + ", ".join(r0["mac_dinh"]) + ".")
-    uoc = list(dict.fromkeys(r0["uoc_tinh"]))
+        L.append("🔁 Khổ trải vượt 33×60 nên buộc in offset.")
+    uoc = [u.replace(" (ước tính)", "") for u in dict.fromkeys(r0["uoc_tinh"])]
+    md = r0["mac_dinh"]
+    dong = []
     if uoc:
-        L.append("⚠️ Ước tính: " + ", ".join(uoc) + ".")
-    else:
-        L.append("✅ Đủ thông số, không có khoản ước tính.")
-    for d in P.get("chinh_sach", {}).get("dong", []):
-        L.append("📎 " + d)
+        dong.append("⚠️ Ước tính: " + "; ".join(uoc) + ".")
+    if md:
+        dong.append("ℹ️ Mặc định: " + ", ".join(md) + ".")
+    if not uoc:
+        dong.append("✅ Đủ thông số.")
+    L.append(" ".join(dong))
+    L.append("📎 Chưa VAT 8%, chưa gồm vận chuyển. Không tặng khuôn. SX 7–10 ngày sau duyệt file, mẫu 3–7 ngày; hàng có sẵn 2–3 ngày; trên 5.000 sp thỏa thuận.")
     msg = "\n".join(L)
     return msg if len(msg) <= 1990 else msg[:1985] + "…"
 

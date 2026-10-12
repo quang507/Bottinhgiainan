@@ -69,9 +69,12 @@ def tra_loi(chat_id: str, text: str) -> str:
         return (f"Bảng giá đang dùng:\n• Giấy: {giay}\n• Chipboard {p['chipboard_gia_to_65x86']:,} đ/tờ 65×86\n"
                 f"• Kẽm {p['gia_kem']:,} đ/bản, công in tối thiểu {p['cong_in_toi_thieu_1_kem']:,} đ/kẽm, khuôn bế {p['khuon_be']:,} đ\n"
                 f"• Vận chuyển {int(p['pct_van_chuyen']*100)}%, lợi nhuận {int(p['pct_loi_nhuan']*100)}%").replace(",", ".")
+    if lower in ("chính sách", "chinh sach", "điều khoản", "/chinhsach"):
+        return "
+".join("📎 " + d for d in engine.P.get("chinh_sach", {}).get("dong", []))
     if lower in ("help", "/help", "hướng dẫn", "?"):
         return ("Gửi yêu cầu một tin, ví dụ:\n'100 hộp âm dương 30x25x5, Ivory 300, in 4 màu, cán mờ, ép kim logo'\n"
-                "Bot sẽ hỏi lại nếu thiếu, rồi báo giá 3 bậc số lượng. Gõ 'reset' để làm đơn mới, 'giá' để xem bảng giá.")
+                "Bot sẽ hỏi lại nếu thiếu, rồi báo giá 3 bậc số lượng. Gõ 'chính sách' xem điều khoản, 'reset' làm đơn mới, 'giá' xem bảng giá.")
 
     da_biet = state.get(chat_id, {}).get("spec")
     s = boc_tach(client, t, da_biet)
