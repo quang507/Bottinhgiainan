@@ -325,6 +325,13 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
     r["gia_ban"] = r["chi_phi"] * (1 + ln) / SL
     lt = P["lam_tron"]
     r["gia_ban_tron"] = math.ceil(r["gia_ban"] / lt) * lt
+    if don.loai_sp == "tem_decal" and don.thanh_phan:
+        tp = don.thanh_phan[0]
+        ny = gia_niem_yet_decal(tp.trai_w - 0.4, tp.trai_h - 0.4, SL)
+        if ny:
+            r["niem_yet"] = ny
+            r["gia_ban_tron"] = math.ceil(ny / 10) * 10
+            r["gia_ban"] = ny
     return r
 
 
@@ -441,6 +448,24 @@ def _dung_don(spec: dict) -> DonHang:
     return DonHang(ten or "Hộp giấy", tp, gc, khuon_be=kb)
 
 
+def gia_niem_yet_decal(dai, rong, SL):
+    """Giá bán đ/tem theo bảng My (decal giấy, cán bóng, cắt TP, offset). None nếu ngoài điều kiện."""
+    B = P.get("bang_gia_decal_offset")
+    if not B or not dai or not rong or SL < B["dieu_kien"]["so_luong_toi_thieu"]:
+        return None
+    cot = max(i for i, q in enumerate(B["so_luong"]) if SL >= q)
+    diem = sorted(((float(k.split("x")[0]) * float(k.split("x")[1]), v[cot]) for k, v in B["kich_thuoc"].items()))
+    a = dai * rong
+    if a <= diem[0][0]:
+        return diem[0][1]
+    if a >= diem[-1][0]:
+        return diem[-1][1]
+    for (a1, g1), (a2, g2) in zip(diem, diem[1:]):
+        if a1 <= a <= a2:
+            return g1 + (g2 - g1) * (a - a1) / (a2 - a1)
+    return None
+
+
 def fmt(n):
     return f"{n:,.0f}".replace(",", ".")
 
@@ -470,14 +495,21 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     ten = don.ten if (kt and kt.replace("×", "x") in don.ten.replace("×", "x").replace(".0", "")) else f"{don.ten} {kt} cm"
     L = [f"📦 {ten} · {quy_cach}" + (" · " + ", ".join(gc) if gc else "")]
     for r in ket_qua:
-        L.append(f"🔹 {fmt(r['SL'])} cái ({'KTS' if r['kts'] else 'offset'}): {fmt(r['gia_ban_tron'])} đ/cái · {fmt(r['gia_ban_tron'] * r['SL'])} đ "
-                 f"(vốn {fmt(r['gia_von'])}, lãi {int(round(r['pct_ln'] * 100))}%)")
+        duoi = "(theo bảng giá My)" if r.get("niem_yet") else f"(vốn {fmt(r['gia_von'])}, lãi {int(round(r['pct_ln'] * 100))}%)"
+        L.append(f"🔹 {fmt(r['SL'])} cái ({'KTS' if r['kts'] else 'offset'}): {fmt(r['gia_ban_tron'])} đ/cái · {fmt(r['gia_ban_tron'] * r['SL'])} đ {duoi}")
     r0 = ket_qua[0]
+    if any(r.get("niem_yet") for r in ket_qua):
+        L.append("📋 Giá bán theo bảng decal offset của My (cán bóng, cắt TP, nội suy theo kích thước); vốn bên dưới chỉ để tham khảo.")
     boc = " · ".join(f"{t.split(' (')[0].replace('Công in', 'in').replace(' thành phẩm', '')} {fmt_k(v)}" for t, v in r0["dong"] if v)
     L.append(f"🧾 @{fmt(r0['SL'])}: {boc}. Cố định {fmt_k(r0['co_dinh'])} = {fmt_k(r0['co_dinh'] / r0['SL'])}/cái.")
     khac = tinh(don, r0["SL"], kts=not r0["kts"])
-    kha_thi = r0["kts"] or all(max(ups(*k["kho"], tp.trai_w, tp.trai_h) for k in P["don_kts"]["kho_in_nhanh"]) for tp in don.thanh_phan if tp.so_mau)
-    if kha_thi:
+    if r0.get("niem_yet"):
+        kha_thi = None
+    else:
+        kha_thi = r0["kts"] or all(max(ups(*k["kho"], tp.trai_w, tp.trai_h) for k in P["don_kts"]["kho_in_nhanh"]) for tp in don.thanh_phan if tp.so_mau)
+    if kha_thi is None:
+        pass
+    elif kha_thi:
         L.append(f"🔁 Nếu {'offset' if r0['kts'] else 'in nhanh'} @{fmt(r0['SL'])}: vốn {fmt(khac['gia_von'])}, bán {fmt(khac['gia_ban_tron'])}. (Ghi 'in offset'/'in KTS' để chọn.)")
     else:
         L.append("🔁 Khổ trải vượt 33×60 nên buộc in offset.")

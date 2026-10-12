@@ -386,5 +386,49 @@
   },
   "canh_bao": {
     "giay_day_khong_can_mang": "Giấy ≥300g không cán màng dễ vỡ gân khi cấn gấp, nên tư vấn khách cán màng."
+  },
+  "bang_gia_decal_offset": {
+    "_ghi_chu": "Bảng giá My gửi 12/10/2026: nhãn decal giấy, cán bóng, cắt thành phẩm, in offset (test mẫu trước). Giá bán đ/tem theo kích thước × số lượng. Bot nội suy theo diện tích, mốc số lượng lấy mốc thấp hơn gần nhất.",
+    "dieu_kien": {
+      "loai": "tem_decal",
+      "so_luong_toi_thieu": 10000
+    },
+    "so_luong": [
+      10000,
+      15000,
+      20000
+    ],
+    "kich_thuoc": {
+      "3x3": [
+        130,
+        120,
+        110
+      ],
+      "5x5": [
+        140,
+        133,
+        120
+      ],
+      "6x6": [
+        190,
+        153,
+        135
+      ],
+      "5x10": [
+        220,
+        187,
+        160
+      ],
+      "10x10": [
+        310,
+        333,
+        325
+      ],
+      "10x15": [
+        500,
+        467,
+        430
+      ]
+    }
   }
 }

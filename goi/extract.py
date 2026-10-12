@@ -54,6 +54,8 @@ class Spec(BaseModel):
     gia_quai: float = Field(description="Giá quai túi đ/cặp nếu tin nói; 0 nếu không")
     can_mang_2_mat: bool = Field(description="true nếu tin nói cán màng (mờ/bóng) 2 mặt")
     kieu_in_2_mat: Literal["AB", "tu_tro", "tro_nhip", ""] = Field(description="Chỉ khi in 2 mặt và tin nói rõ: bình AB/sheet-wise → AB; tự trở/work and turn → tu_tro; trở nhíp/work and tumble → tro_nhip; rỗng nếu không nói")
+    loai_anh: Literal["san_pham", "khuon", "bang_gia", "khac", ""] = Field(description="Chỉ khi có ảnh kèm: ảnh sản phẩm/mockup → san_pham; file khuôn/dieline → khuon; bảng giá → bang_gia; khác → khac. Không có ảnh → rỗng.")
+    noi_dung_anh: str = Field(description="Chỉ khi có ảnh: mô tả ngắn nội dung ảnh (ví dụ bảng giá thì liệt kê các dòng giá; khuôn thì ghi kích thước trải nếu đọc được). Không có ảnh → rỗng.")
     in_kts: Literal["kts", "offset", ""] = Field(description="kts nếu tin nói in KTS / kỹ thuật số / in nhanh; offset nếu nói rõ in offset; rỗng nếu không nói")
 
 
@@ -99,17 +101,22 @@ def chuan_hoa(spec: "Spec") -> dict:
     return d
 
 
-def boc_tach(client: anthropic.Anthropic, tin_moi: str, da_biet: dict = None) -> dict:
+def boc_tach(client: anthropic.Anthropic, tin_moi: str, da_biet: dict = None, anh: tuple = None) -> dict:
+    """anh = (media_type, base64) nếu khách gửi ảnh; tin_moi khi đó là caption (có thể rỗng)."""
     noi_dung = ""
     if da_biet:
         noi_dung += "THÔNG SỐ ĐÃ BIẾT (từ các tin trước):\n" + json.dumps(da_biet, ensure_ascii=False) + "\n\n"
-    noi_dung += "TIN NHẮN MỚI:\n" + tin_moi
+    noi_dung += "TIN NHẮN MỚI:\n" + (tin_moi or "(khách gửi ảnh, không có chữ)")
+    content = [{"type": "text", "text": noi_dung}]
+    if anh:
+        content.insert(0, {"type": "image", "source": {"type": "base64", "media_type": anh[0], "data": anh[1]}})
+        content.append({"type": "text", "text": "Có ảnh kèm theo: phân loại vào loai_anh và mô tả vào noi_dung_anh. Nếu là ảnh sản phẩm/khuôn, lấy thông số từ ảnh."})
     resp = client.messages.parse(
         model=MODEL,
         max_tokens=2000,
         system=SYSTEM,
         output_config={"effort": "low"},
-        messages=[{"role": "user", "content": noi_dung}],
+        messages=[{"role": "user", "content": content}],
         output_format=Spec,
     )
     return chuan_hoa(resp.parsed_output)

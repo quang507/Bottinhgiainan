@@ -57,8 +57,23 @@ def bac_so_luong(sl: list) -> list:
     return sorted(out)[:4] if len(sl) != 1 else [sl[0]] + [q for q in mac_dinh if q > sl[0]][:2]
 
 
-def tra_loi(chat_id: str, text: str) -> str:
-    t = text.strip()
+def tai_anh(url: str):
+    """Tải ảnh Zalo về, trả (media_type, base64) hoặc None."""
+    import base64
+    try:
+        r = http.get(url, timeout=30)
+        r.raise_for_status()
+        mt = r.headers.get("content-type", "image/jpeg").split(";")[0]
+        if mt not in ("image/jpeg", "image/png", "image/webp", "image/gif"):
+            mt = "image/jpeg"
+        return (mt, base64.b64encode(r.content).decode())
+    except Exception:  # noqa: BLE001
+        log.exception("Không tải được ảnh")
+        return None
+
+
+def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
+    t = (text or "").strip()
     lower = t.lower()
     if lower in ("reset", "đơn mới", "don moi", "/reset"):
         state.pop(chat_id, None); luu_state()
@@ -76,7 +91,15 @@ def tra_loi(chat_id: str, text: str) -> str:
                 "Bot sẽ hỏi lại nếu thiếu, rồi báo giá 3 bậc số lượng. Gõ 'chính sách' xem điều khoản, 'reset' làm đơn mới, 'giá' xem bảng giá.")
 
     da_biet = state.get(chat_id, {}).get("spec")
-    s = boc_tach(client, t, da_biet)
+    s = boc_tach(client, t, da_biet, anh)
+    if anh and s.get("loai_anh") == "bang_gia":
+        state.setdefault("_bang_gia_nhan", []).append({"luc": time.time(), "chat": chat_id, "noi_dung": s.get("noi_dung_anh", "")})
+        luu_state()
+        log.info("Nhận bảng giá từ ảnh: %s", s.get("noi_dung_anh", "")[:500])
+        return ("📋 Em đọc được bảng giá trong ảnh: " + (s.get("noi_dung_anh") or "")[:900]
+                + "\n\nBot chưa tự nhập bảng giá vào công thức. Anh Quang sẽ đưa bảng này vào bot (prices.json).")
+    if anh and s.get("loai_anh") in ("khac",) and not s.get("loai"):
+        return "Em thấy ảnh nhưng chưa rõ cần tính gì. Anh/chị gửi kèm: loại hộp, kích thước, số lượng, giấy, gia công giúp em."
     state[chat_id] = {"spec": s, "luc": time.time()}
     luu_state()
     thieu = [x for x in s["thieu"]] or [k for k in ("loai", "dai", "rong") if not s.get(k)] or ([] if s["so_luong"] else ["số lượng"])
@@ -91,18 +114,28 @@ def tra_loi(chat_id: str, text: str) -> str:
 
 def xu_ly(update: dict):
     msg = update.get("message") or {}
-    if update.get("event_name") not in (None, "message.text.received"):
+    ev = update.get("event_name")
+    if ev not in (None, "message.text.received", "message.image.received"):
         return
     mid = msg.get("message_id")
-    if not msg.get("text") or mid in da_xu_ly or (msg.get("from") or {}).get("is_bot"):
+    if mid in da_xu_ly or (msg.get("from") or {}).get("is_bot"):
         return
+    anh = None
+    if ev == "message.image.received" or msg.get("photo"):
+        anh = tai_anh(msg.get("photo", ""))
+        text = msg.get("caption") or msg.get("text") or ""
+        if not anh:
+            return
+    else:
+        text = msg.get("text") or ""
+        if not text:
+            return
     da_xu_ly.append(mid)
     del da_xu_ly[:-500]
     chat_id = msg["chat"]["id"]
-    text = msg["text"]
-    log.info("[%s] %s: %s", chat_id, (msg.get("from") or {}).get("display_name"), text[:120])
+    log.info("[%s] %s: %s%s", chat_id, (msg.get("from") or {}).get("display_name"), "[ảnh] " if anh else "", text[:120])
     try:
-        reply = tra_loi(chat_id, text)
+        reply = tra_loi(chat_id, text, anh)
     except Exception as e:  # noqa: BLE001
         log.exception("Lỗi xử lý tin: %s", text[:200])
         reply = f"Bot gặp lỗi khi tính ({type(e).__name__}: {str(e)[:150]}). Anh Quang sẽ sửa, gửi lại sau hoặc gõ 'reset' giúp em."
