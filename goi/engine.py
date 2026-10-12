@@ -323,7 +323,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         ln = next((pc for nguong, pc in P.get("bac_loi_nhuan", {}).get("bac", []) if SL < nguong), P["pct_loi_nhuan"])
     r["pct_ln"] = ln
     r["gia_ban"] = r["chi_phi"] * (1 + ln) / SL
-    lt = P["lam_tron"]
+    lt = 10 if r["gia_ban"] < 1000 else 100 if r["gia_ban"] < 10000 else P["lam_tron"]
     r["gia_ban_tron"] = math.ceil(r["gia_ban"] / lt) * lt
     if don.loai_sp == "tem_decal" and don.thanh_phan:
         tp = don.thanh_phan[0]
@@ -417,7 +417,7 @@ def _dung_don(spec: dict) -> DonHang:
         tp = [ThanhPhan("Thiệp", giay, gsm, w + 0.6, h + 0.6, 1, mau, mat if spec.get("so_mat") else 2)]
         if "be" not in gc:
             gc.append("cat_tp")
-        return DonHang(ten or "Thiệp", tp, gc, khuon_be=0)
+        return DonHang(ten or ("Tấm giấy bế" if "be" in gc else "Thiệp"), tp, gc, khuon_be=1 if "be" in gc else 0)
     if loai == "tem_decal":
         tp = [ThanhPhan("Tem decal", "Decal", 1, (D or 5) + 0.4, (R or 5) + 0.4, 1, mau, 1)]
         gc = [g for g in gc if g != "be"]
