@@ -499,10 +499,14 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     gc = [P["gia_cong"][g]["ten"] for g in don.gia_cong if g in P["gia_cong"]] + [f"{t} {fmt(g)}đ" for t, g in don.gc_tuy_chinh]
     ten_chuan = don.ten.replace("×", "x").replace("*", "x")
     ten = don.ten if (kt and kt.replace("×", "x") in ten_chuan) else f"{don.ten} {kt} cm"
-    L = [f"📦 {ten} · {quy_cach}" + (" · " + ", ".join(gc) if gc else "")]
+    trai = ""
+    r0_bai = (ket_qua[0].get("bai_binh") or [None])[0]
+    if don.loai_sp in ("hop_gap", "hop_cung", "tui_giay") and r0_bai:
+        trai = f" · khổ trải {so(round(r0_bai[3], 1))}×{so(round(r0_bai[4], 1))}"
+    L = [f"📦 {ten} · {quy_cach}" + (" · " + ", ".join(gc) if gc else "") + trai]
     for r in ket_qua:
         duoi = "(theo bảng giá My)" if r.get("niem_yet") else f"(vốn {fmt(r['gia_von'])}, lãi {int(round(r['pct_ln'] * 100))}%)"
-        L.append(f"🔹 {fmt(r['SL'])} cái ({'KTS' if r['kts'] else 'offset'}): {fmt(r['gia_ban_tron'])} đ/cái · {fmt(r['gia_ban_tron'] * r['SL'])} đ {duoi}")
+        L.append(f"🔹 {fmt(r['SL'])} cái: giá bán {fmt(r['gia_ban_tron'])} đ/cái · tổng {fmt(r['gia_ban_tron'] * r['SL'])} đ ({'KTS' if r['kts'] else 'offset'}, {duoi.strip('()')})")
     r0 = ket_qua[0]
     if any(r.get("niem_yet") for r in ket_qua):
         L.append("📋 Giá bán theo bảng decal offset của My (cán bóng, cắt TP, nội suy theo kích thước); vốn bên dưới chỉ để tham khảo.")
@@ -546,7 +550,7 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     if canh_bao:
         dong.append("⚠️ " + " ".join(m.split("→ ", 1)[1] for m in canh_bao))
     L.append(" ".join(dong))
-    L.append("📎 Chưa VAT 8%, chưa gồm vận chuyển. Không tặng khuôn. SX 7–10 ngày sau duyệt file, mẫu 3–7 ngày; hàng có sẵn 2–3 ngày; trên 5.000 sp thỏa thuận.")
+    L.append("📎 Chưa VAT 8%, chưa vận chuyển, không tặng khuôn. SX 7–10 ngày sau duyệt file, mẫu 3–7 ngày.")
     msg = "\n".join(L)
     return msg if len(msg) <= 1990 else msg[:1985] + "…"
 
