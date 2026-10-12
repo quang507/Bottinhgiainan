@@ -50,6 +50,11 @@ def gia_in_nhanh_to(W, H, so_mat):
     return so_ban * bang["gia_to_a4_gom_giay"]["2" if so_mat >= 2 else "1"]
 
 
+def so_nhip(don: DonHang, tp: ThanhPhan, SL, con_to) -> int:
+    """Số nhịp bế (My): số miếng cần bế ÷ số con trên khuôn. Khuôn 1 con: 1.600 cái = 1.600 nhịp; khuôn 2 con: 800 nhịp."""
+    return math.ceil(SL * tp.con_moi_sp / (don.con_khuon or con_to))
+
+
 def don_gia_nhip(don: DonHang, g: dict) -> float:
     """Đơn giá bế mỗi nhịp (My): khuôn chỉ có viền 450 đ, khuôn nhiều chi tiết bên trong (hộp, túi) 750 đ."""
     return g.get("gia_khuon_don_gian", g["gia"]) if don.khuon_don_gian else g["gia"]
@@ -173,7 +178,7 @@ def _binh_bai_re_nhat(don: DonHang, tp: ThanhPhan, SL, kts, ung_vien):
     tot = None
     for (W, H), (con, bot_tai) in ung_vien:
         for pa in _cac_cach_in(don, tp, SL, kts, W, H, con, bot_tai):
-            pa.diem += pa.so_to * gia_nhip
+            pa.diem += so_nhip(don, tp, SL, pa.con) * gia_nhip
             if tot is None or pa.diem < tot.diem:
                 tot = pa
     return tot
@@ -205,7 +210,7 @@ def _tinh_thanh_phan(don: DonHang, SL, kts, r, tam):
             if tp.so_mau and pa.so_to * tp.so_mat < 3000:      # công in tối thiểu là chi phí cố định
                 r["co_dinh"] += pa.tien_in
         tien_giay = pa.so_to * pa.gia_to
-        tam["tong_nhip"] += pa.so_to
+        tam["tong_nhip"] += so_nhip(don, tp, SL, pa.con)
         tam["dien_tich_sp"] += tp.trai_w * tp.trai_h * tp.con_moi_sp / 10000
         ten_giay = "Decal giấy" if tp.loai == "Decal" else f"{tp.ten} {tp.loai} {tp.gsm}g"
         trai = f"trải {_so(tp.trai_w - pa.bot_tai)}×{_so(tp.trai_h)}, " if don.co_kho_trai else ""
@@ -258,7 +263,8 @@ def _gc_theo_nhip(key, g, don, SL, tam, r):
     san = g["san_moi_khuon"] * so_lo if g.get("san_moi_khuon") else g.get("san", 0)
     tien = max(nhip * don_gia, san)
     cham_san = f", tối thiểu {so_lo} lô" if tien == san and g.get("san_moi_khuon") else ""
-    return f"{g['ten']} ({_fmt(nhip)} nhịp × {don_gia}đ{cham_san})", tien, 0
+    khuon = f", khuôn {don.con_khuon} con" if don.con_khuon else ""
+    return f"{g['ten']} ({_fmt(nhip)} nhịp × {don_gia}đ{khuon}{cham_san})", tien, 0
 
 
 def _gc_theo_mep(key, g, don, SL, tam, r):
@@ -384,7 +390,7 @@ def _gia_mot_khuon(don: DonHang, r) -> float:
     if don.loai_sp in KB["loai_cao_nhat"]:
         gia = KB["toi_da"]
     else:
-        dt_bai = max((con * w * h for (_, _, con, w, h) in r.get("bai_binh", [])), default=KB["full_kho_cm2"])
+        dt_bai = max(((don.con_khuon or con) * w * h for (_, _, con, w, h) in r.get("bai_binh", [])), default=KB["full_kho_cm2"])
         gia = min(KB["toi_da"], max(KB["toi_thieu"], KB["toi_thieu"] + (KB["toi_da"] - KB["toi_thieu"]) * dt_bai / KB["full_kho_cm2"]))
     return round(gia / 10000) * 10000
 
@@ -403,8 +409,12 @@ def _tinh_khuon(don: DonHang, r, tam):
 
 # ---------------------------------------------------------------- bước 6: định giá
 def _lam_tron_len(gia: float) -> float:
-    buoc = 10 if gia < 1000 else 100 if gia < 10000 else P["lam_tron"]
-    return math.ceil(gia / buoc) * buoc
+    """Từ 10.000 đ: tròn LÊN 1.000 đ. Dưới 10.000 đ: tròn về mức gần nhất (100 đ, hoặc 10 đ nếu dưới 1.000 đ),
+    vì tròn lên 100 đ làm hàng rẻ đội thêm 5–6% (đơn tấm C100: tính ra 1.609 đ, My báo 1.600 đ)."""
+    if gia >= 10000:
+        return math.ceil(gia / P["lam_tron"]) * P["lam_tron"]
+    buoc = 10 if gia < 1000 else 100
+    return max(buoc, math.floor(gia / buoc + 0.5) * buoc)
 
 
 def _ap_gia_niem_yet(don: DonHang, SL, kts, r):

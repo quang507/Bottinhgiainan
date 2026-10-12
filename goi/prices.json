@@ -100,7 +100,7 @@
       "gia": 750,
       "gia_khuon_don_gian": 450,
       "san": 300000,
-      "_ghi_chu": "My 12/10: 750 đ/nhịp với khuôn nhiều chi tiết bên trong (hộp, túi); 450 đ/nhịp với khuôn chỉ có viền (thẻ, tấm, tem). Ít nhất 300k/lô."
+      "_ghi_chu": "My 12/10: bế tính theo nhịp trên con. Khuôn 1 con thì 1.600 cái = 1.600 nhịp, khuôn 2 con = 800 nhịp (Excel 'Đơn số ít': 300 cái × 750 = 225.000). 750 đ/nhịp với khuôn nhiều chi tiết bên trong (hộp, túi); 450 đ/nhịp với khuôn chỉ có viền (thẻ, tem). Ít nhất 300k/lô. Hàng có in: số con trên khuôn = số con/tờ của bài bình. Tấm giấy KHÔNG in: khuôn 1 con, 750 đ/nhịp (My xác nhận đơn 1.600 tấm C100 30×40 = 1.600 nhịp, báo 1.600 đ/tấm). Tin ghi 'khuôn N con' thì theo tin."
     },
     "dan_may": {
       "ten": "Dán hộp",
@@ -164,7 +164,7 @@
       "gia": 750,
       "san": 300000,
       "san_moi_khuon": 300000,
-      "_ghi_chu": "My 12/10: 750 đ/nhịp với khuôn nhiều chi tiết bên trong (hộp, túi); 450 đ/nhịp với khuôn chỉ có viền (thẻ, tấm, tem). Ít nhất 300k/lô. Hộp cứng 4 khuôn: bot tính 4 lô × 300k (suy từ báo giá BG00865, chờ My xác nhận)."
+      "_ghi_chu": "My 12/10: bế tính theo nhịp trên con. Khuôn 1 con thì 1.600 cái = 1.600 nhịp, khuôn 2 con = 800 nhịp (Excel 'Đơn số ít': 300 cái × 750 = 225.000). 750 đ/nhịp với khuôn nhiều chi tiết bên trong (hộp, túi); 450 đ/nhịp với khuôn chỉ có viền (thẻ, tem). Ít nhất 300k/lô. Hàng có in: số con trên khuôn = số con/tờ của bài bình. Tấm giấy KHÔNG in: khuôn 1 con, 750 đ/nhịp (My xác nhận đơn 1.600 tấm C100 30×40 = 1.600 nhịp, báo 1.600 đ/tấm). Tin ghi 'khuôn N con' thì theo tin. Hộp cứng 4 khuôn: bot tính 4 lô × 300k (suy từ sổ My, chờ My xác nhận)."
     },
     "phay_ranh": {
       "ten": "Phay rãnh chipboard",

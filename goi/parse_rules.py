@@ -91,7 +91,7 @@ def _spec_trong():
             "gia_giay_tr_tan": None, "tu_sua_bai": None, "kho_giay": None, "so_con_to": None, "pct_loi_nhuan": None,
             "khuon_be_nghin": None, "khong_proof": False, "khuon_co_san": False, "gia_cong_tuy_chinh": [],
             "ep_kim_kt": None, "dap_noi_kt": None, "dap_noi_am_duong": False, "so_mep_dan": None, "tui_2_manh": False,
-            "gia_quai": None, "can_mang_2_mat": False, "uv_kt": None, "cua_so_kt": None, "day_2_gut": False, "kieu_in_2_mat": None, "in_kts": None, "y_dinh": "bao_gia",
+            "gia_quai": None, "can_mang_2_mat": False, "uv_kt": None, "cua_so_kt": None, "day_2_gut": False, "con_khuon": None, "kieu_in_2_mat": None, "in_kts": None, "y_dinh": "bao_gia",
             "dong_hang_khac": "", "loai_anh": "", "noi_dung_anh": ""}
 
 
@@ -139,6 +139,8 @@ def phan_tich(tin: str, da_biet: dict = None):
     m = re.search(rf"(?:lợi nhuận|lãi)\s*:?\s*({NUM})\s*(%?)", t_gc)
     if m:
         v = _f(m.group(1)); s["pct_loi_nhuan"] = v / 100 if (m.group(2) or v > 1) else v; moi.add("x")
+    m = re.search(r"khuôn(?: bế)?\s*:?\s*(\d+)\s*con\b(?!\s*/)", t_gc)
+    if m: s["con_khuon"] = int(m.group(1)); moi.add("x")
     m = re.search(r"khuôn(?: bế)?\s*:?\s*(\d+)\s*k\b", t_gc)
     if m: s["khuon_be_nghin"] = int(m.group(1)); moi.add("x")
     if re.search(r"không proof|bỏ proof", t_gc): s["khong_proof"] = True; moi.add("x")
@@ -154,7 +156,7 @@ def phan_tich(tin: str, da_biet: dict = None):
     if m: s["so_mep_dan"] = int(m.group(1)); moi.add("x")
 
     # bỏ các cụm đã đọc để không lẫn vào kích thước/số lượng
-    t2 = re.sub(rf"{NUM}\s*(?:tr|triệu)\s*/\s*tấn|sửa bài\s*\d+\s*(?:tờ)?|khổ(?: in| giấy)?\s*\d+\s*x\s*\d+|\d+\s*con\s*/\s*tờ|khuôn(?: bế)?\s*:?\s*\d+\s*k\b|(?:lợi nhuận|lãi)\s*:?\s*{NUM}\s*%?|quai[^,;.\n]{{0,25}}?\d[\d.]*\s*đ(?:\s*/\s*cặp)?|\d+[.,]?\d*\s*đ\s*/\s*m2", " ", t_gc)
+    t2 = re.sub(rf"{NUM}\s*(?:tr|triệu)\s*/\s*tấn|sửa bài\s*\d+\s*(?:tờ)?|khổ(?: in| giấy)?\s*\d+\s*x\s*\d+|\d+\s*con\s*/\s*tờ|khuôn(?: bế)?\s*:?\s*\d+\s*con\b(?!\s*/)|khuôn(?: bế)?\s*:?\s*\d+\s*k\b|(?:lợi nhuận|lãi)\s*:?\s*{NUM}\s*%?|quai[^,;.\n]{{0,25}}?\d[\d.]*\s*đ(?:\s*/\s*cặp)?|\d+[.,]?\d*\s*đ\s*/\s*m2", " ", t_gc)
 
     # ---- kích thước ----
     dims_sp = []
@@ -178,6 +180,9 @@ def phan_tich(tin: str, da_biet: dict = None):
         d = _f(m.group(1)) / (10 if (m.group(2) == "mm" or (not m.group(2) and _f(m.group(1)) > 40)) else 1)
         nhan = {"dai": d, "rong": d}
         t3 = t3[:m.start()] + " " + t3[m.end():]
+    if not loai_moi and not s.get("loai") and not dims_sp and set(nhan) == {"dai", "cao"}:
+        loai_moi = "thiep"                          # chỉ có ngang × cao, không hông/rộng → ấn phẩm phẳng
+        if not s.get("san_pham"): s["san_pham"] = "Ấn phẩm"
     nhieu_sp = len(dims_sp) > 1
     mm_doan = False
     if dims_sp:
@@ -293,6 +298,8 @@ def phan_tich(tin: str, da_biet: dict = None):
             elif re.search(r"\btấm\b", t): ten = "Tấm giấy"
             elif re.search(r"đai", t): ten = "Đai giấy"
             elif re.search(r"vòng cổ", t): ten = "Vòng cổ hũ"
+            elif re.search(r"tờ rơi", t): ten = "Tờ rơi"
+            elif not re.search(r"thiệp|card|danh thiếp", t): ten = "Ấn phẩm"
         if s.get("loai") == "hop_cung" and s.get("kieu_hop"): ten = f"Hộp cứng {s['kieu_hop']}"
         elif s.get("loai") == "hop_gap" and s.get("kieu_hop"): ten = f"Hộp {s['kieu_hop']}" if "hộp" not in s["kieu_hop"] else s["kieu_hop"].capitalize()
         s["san_pham"] = ten

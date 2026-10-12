@@ -97,6 +97,7 @@ GOI_Y_GUI_THEM = [
     (lambda uoc, md: any("gia công" in m for m in md), "gia công cần làm (cán màng, ép kim…)"),
     (lambda uoc, md: any("vùng" in m for m in md), "kích thước vùng ép kim, dập nổi, UV hoặc cửa sổ"),
     (lambda uoc, md: any("quai" in m for m in md), "loại dây quai"),
+    (lambda uoc, md: any(m.startswith("khuôn bế 1 con") for m in md), "số con trên khuôn bế (bot tính khuôn 1 con, mỗi cái 1 nhịp; khác thì ghi 'khuôn 2 con')"),
     (lambda uoc, md: any("My chốt" in u for u in uoc), "đơn giá dựng hộp (chờ My)"),
 ]
 

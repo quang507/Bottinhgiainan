@@ -49,6 +49,8 @@ class DonHang:
     uv_kt: tuple = None              # vùng UV định hình (cm)
     cua_so_kt: tuple = None          # kích thước cửa sổ (cm)
     day_2_gut: bool = False          # dây treo thẻ bài thắt 2 gút
+    con_khuon: int = None            # số con trên khuôn bế; None = bằng số con/tờ của bài bình
+    khuon_co_chi_tiet: bool = False  # ép tính 750 đ/nhịp dù là hàng phẳng
 
     @property
     def co_kho_trai(self) -> bool:
@@ -60,7 +62,7 @@ class DonHang:
 
     @property
     def khuon_don_gian(self) -> bool:
-        return bool(dac_tinh(self.loai_sp).get("khuon_don_gian"))
+        return bool(dac_tinh(self.loai_sp).get("khuon_don_gian")) and not self.khuon_co_chi_tiet
 
     @property
     def co_in(self) -> bool:
@@ -114,7 +116,11 @@ def _thiep(v: _DauVao) -> DonHang:
         tp[0].ten = "Thẻ bài"
         if "xo_day" in gc:   # thẻ bài: My tính theo dây treo (1 gút 200 đ, 2 gút 300 đ), không tính công xỏ dây riêng
             gc = [("day_treo" if g == "xo_day" else g) for g in gc]
-    return DonHang(v.ten or ten_mac_dinh, tp, gc, khuon_be=1 if "be" in gc else 0, uoc_tinh=uoc)
+    don = DonHang(v.ten or ten_mac_dinh, tp, gc, khuon_be=1 if "be" in gc else 0, uoc_tinh=uoc)
+    if "be" in gc and not v.mau:      # tấm giấy không in: My làm khuôn 1 con, bế từng tấm, 750 đ/nhịp
+        don.con_khuon, don.khuon_co_chi_tiet = 1, True
+        don.mac_dinh.append("khuôn bế 1 con (khác thì ghi 'khuôn 2 con')")
+    return don
 
 
 def _tem_decal(v: _DauVao) -> DonHang:
@@ -225,6 +231,9 @@ def _ap_tuy_chinh(don: DonHang, spec: dict) -> None:
     don.uv_kt = tuple(spec["uv_kt"]) if spec.get("uv_kt") else None
     don.cua_so_kt = tuple(spec["cua_so_kt"]) if spec.get("cua_so_kt") else None
     don.day_2_gut = bool(spec.get("day_2_gut"))
+    if spec.get("con_khuon"):
+        don.con_khuon = spec["con_khuon"]
+        don.mac_dinh = [m for m in don.mac_dinh if not m.startswith("khuôn bế 1 con")]
     don.gc_tuy_chinh = [(g["ten"], g["gia_moi_cai"]) for g in (spec.get("gia_cong_tuy_chinh") or [])]
 
 

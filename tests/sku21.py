@@ -101,11 +101,12 @@ assert (sp["dai"], sp["rong"], sp["cao"]) == (10, 5, 15) and sp["ep_kim_kt"] == 
 GIA_MY = [("100 hộp cứng âm dương 30x12x7 cm bồi chipboard giấy C150 in 4 màu cán mờ", 100, 105000),
           ("100 hộp cứng nắp kéo 30x25x7 cm chipboard bồi C150 in 4 màu cán mờ", 100, 125000),
           ("90 hộp lạp xưởng 13x4x21 cm, Ivory 210, in KTS, cán mờ 1 mặt, bồi giấy Ivory 210, bế dán support cửa sổ, xỏ dây", 90, 42000),
-          ("100 thiệp 8x12 cm couche 300 in 2 mặt", 100, 2500)]
+          ("100 thiệp 8x12 cm couche 300 in 2 mặt", 100, 2500),
+          ("Chiều ngang 30cm chiều cao 40cm giấy C100gsm số lượng 1600 cái bế thành phẩm, không in, không cáng màng giá bao nhiêu tiền 1 cái", 1600, 1600)]
 for tin, sl, gia_my in GIA_MY:
     sp, _, _ = parse_rules.phan_tich(tin)
     sp["ket_cau_dac_biet"] = []
     gia = engine.tinh(engine.dung_don(sp), sl)["gia_ban_tron"]
     if abs(gia / gia_my - 1) > 0.12:
         print(f"FAIL: lệch giá My quá 12%: {tin[:50]} bot {gia:,.0f} vs My {gia_my:,}"); sys.exit(1)
-print("Đối chiếu 4 giá My đã báo: trong ±12%")
+print("Đối chiếu 5 giá My đã báo: trong ±12%")
