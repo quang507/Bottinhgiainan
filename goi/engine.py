@@ -138,7 +138,7 @@ def nen_in_nhanh(don: DonHang, SL: int) -> bool:
         if u == 0:
             return False
         tong_to += SL * tp.con_moi_sp / u
-    return 0 < tong_to < K["nguong_to"]
+    return tong_to > 0          # lọt khổ in nhanh là đủ điều kiện; tinh() sẽ chọn cách rẻ hơn
 
 
 def tinh(don: DonHang, SL: int, kts: bool = None):
@@ -252,10 +252,10 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
     for ten, gia in don.gc_tuy_chinh:
         r["dong"].append((ten, SL * gia))
         tong += SL * gia
-    thay_the = {k for f in K["phi_lo"].values() for k in f["thay_cho"]} if kts else set()
+    vi_tri_gc, tien_gc = {}, {}
     for key in don.gia_cong:
         g = P["gia_cong"].get(key)
-        if not g or key in thay_the:
+        if not g:
             continue
         nhan = g["ten"]
         khuon_gc = g.get("khuon", 0)
@@ -295,27 +295,27 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         else:
             tien = max(SL * g["gia"], g.get("san", 0))
         r["dong"].append((nhan, tien))
+        vi_tri_gc[key], tien_gc[key] = len(r["dong"]) - 1, tien
         tong += tien
         if khuon_gc:
             r["dong"].append(("Khuôn " + nhan.split(" (")[0].lower(), khuon_gc))
             tong += khuon_gc
             r["co_dinh"] += khuon_gc
-        if g.get("uoc_tinh") and not (don.loai_sp == "hop_cung" and key in ("phay_ranh", "dung_hop")) and not (kts and key in thay_the):
+        if g.get("uoc_tinh") and not (don.loai_sp == "hop_cung" and key in ("phay_ranh", "dung_hop")):
             r["uoc_tinh"].append(f"đơn giá {g['ten'].lower()}")
-    if kts:
+    if kts:      # lô in nhanh: mỗi nhóm công đoạn tối thiểu 300k (sổ tay My)
         for ten, f in K["phi_lo"].items():
-            if any(k in don.gia_cong for k in f["thay_cho"]):
-                r["dong"].append((ten, f["gia"]))
-                tong += f["gia"]
-                r["co_dinh"] += f["gia"]
-        r["uoc_tinh"].append("phí lô in nhanh")
+            co = [k for k in f["thay_cho"] if k in tien_gc]
+            thieu_lo = f["gia"] - sum(tien_gc[k] for k in co)
+            if co and thieu_lo > 0:
+                i = vi_tri_gc[co[0]]
+                r["dong"][i] = (r["dong"][i][0] + " (tối thiểu lô)", r["dong"][i][1] + thieu_lo)
+                tong += thieu_lo
     if don.khuon_be and getattr(don, "khuon_co_san", False):
         r["dong"].append(("Khuôn bế: có sẵn", 0))
     elif don.khuon_be:
         if don.khuon_be_tien is not None:
             kb = don.khuon_be_tien
-        elif kts and don.loai_sp in K.get("khuon_cho_loai", []):
-            kb = K["khuon"]
         else:
             KB = P.get("khuon_be_theo_kich_thuoc")
             if KB:

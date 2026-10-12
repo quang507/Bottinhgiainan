@@ -257,9 +257,8 @@
     500
   ],
   "don_kts": {
-    "_ghi_chu": "My 12/10/2026: dưới 500 tờ và khổ trải lọt 33×60 thì in nhanh; vượt thì offset. Thiệp/lô nhỏ: in KTS A4 2 mặt 10.000 đ/tờ rồi dàn con (My). Giá 33×60 và A4 1 mặt là ước tính.",
+    "_ghi_chu": "In nhanh (KTS): chỉ khác offset ở tiền in theo tờ (không kẽm, không proof), sửa bài 5 tờ, khổ in nhanh. Gia công và khuôn tính như thường; 'phi_lo' là mức TỐI THIỂU mỗi nhóm công đoạn cho một lô (theo sổ tay My BG00874: cán, bế, bồi, dán, support mỗi khoản 300k). Khuôn 1.000k trong BG00874 là cho 2 khuôn của 3 mẫu hộp, không phải giá khuôn cố định. Quy tắc My: lọt khổ 33×60 thì in nhanh được, vượt thì buộc offset; bot chọn cách rẻ hơn.",
     "tu_sua_bai": 5,
-    "khuon": 1000000,
     "phi_lo": {
       "Cán màng (lô)": {
         "gia": 300000,
@@ -321,11 +320,6 @@
         "gia_2_mat": 10000,
         "uoc_tinh_1_mat": true
       }
-    ],
-    "khuon_cho_loai": [
-      "hop_gap",
-      "hop_cung",
-      "tui_giay"
     ],
     "le_cm": 0.5
   },

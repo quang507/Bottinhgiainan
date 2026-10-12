@@ -70,7 +70,27 @@ for ma, tin in CASES:
     uoc = bool(re.search(r"Tạm tính|chờ My|ước tính|CHƯA gồm|em tính kết cấu|em tính kiểu", r))
     L.append(f"━━ {ma} [{ai} · {time.time()-t0:.1f}s] → {loai}{' (có ước tính)' if gia and uoc else ''}{' · ' + gia[0] + ' đ' if gia else ''}\n   TIN: {tin}\n{r}\n")
 open(sys.argv[1], "w", encoding="utf-8").write("\n".join(L))
+# đơn giá không được tăng khi số lượng tăng (quét dải rộng, không cần AI)
+from goi import engine, parse_rules  # noqa: E402
+tang = []
+for ma, tin in CASES:
+    sp, chac, _ = parse_rules.phan_tich(tin)
+    if sp.get("dong_hang_khac") or parse_rules.thieu_cua(sp):
+        continue
+    sp["ket_cau_dac_biet"] = []
+    don = engine.dung_don(sp)
+    truoc = None
+    for q in (50, 100, 200, 300, 500, 1000, 2000, 3000, 5000, 10000):
+        r = engine.tinh(don, q)
+        if r.get("vuot_kho"):
+            break
+        if truoc and r["gia_von"] > truoc[1] * 1.001:
+            tang.append(f"{ma}: {truoc[0]} cái {truoc[1]:,.0f} → {q} cái {r['gia_von']:,.0f}")
+        truoc = (q, r["gia_von"])
+print("Giá vốn tăng theo số lượng:", tang or "không có")
 co_gia = sum(1 for x in L if "giá bán" in x)
+if tang and "--no-ai" in sys.argv:
+    print("FAIL: đơn giá tăng theo số lượng"); sys.exit(1)
 print(len(CASES), "tin;", co_gia, "ra giá;", len(GOI_AI), "lượt cần AI")
 if "--no-ai" in sys.argv and co_gia < 32:
     print("FAIL: số đơn ra giá giảm còn", co_gia); sys.exit(1)
