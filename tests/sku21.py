@@ -70,4 +70,7 @@ for ma, tin in CASES:
     uoc = bool(re.search(r"Tạm tính|chờ My|ước tính|CHƯA gồm|em tính kết cấu|em tính kiểu", r))
     L.append(f"━━ {ma} [{ai} · {time.time()-t0:.1f}s] → {loai}{' (có ước tính)' if gia and uoc else ''}{' · ' + gia[0] + ' đ' if gia else ''}\n   TIN: {tin}\n{r}\n")
 open(sys.argv[1], "w", encoding="utf-8").write("\n".join(L))
-print(len(CASES), "tin;", len(GOI_AI), "lượt cần AI")
+co_gia = sum(1 for x in L if "giá bán" in x)
+print(len(CASES), "tin;", co_gia, "ra giá;", len(GOI_AI), "lượt cần AI")
+if "--no-ai" in sys.argv and co_gia < 32:
+    print("FAIL: số đơn ra giá giảm còn", co_gia); sys.exit(1)

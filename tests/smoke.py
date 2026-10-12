@@ -16,6 +16,11 @@ if r.returncode != 0:
     print(r.stdout[-1500:], r.stderr[-1500:])
     print("SMOKE FAIL"); sys.exit(1)
 
+r2 = subprocess.run([sys.executable, "-X", "utf8", str(ROOT / "tests" / "sku21.py"), str(out.parent / "sku21.txt"), "--no-ai"], capture_output=True, text=True, encoding="utf-8")
+print("21 SKU + đơn thật:", (r2.stdout.strip().splitlines() or [""])[-1])
+if r2.returncode != 0:
+    print(r2.stdout[-800:], r2.stderr[-800:]); print("SMOKE FAIL"); sys.exit(1)
+
 sys.path.insert(0, str(ROOT))
 for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
     if "=" in line and not line.startswith("#"):

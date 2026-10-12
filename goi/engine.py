@@ -431,7 +431,9 @@ def _dung_don(spec: dict) -> DonHang:
         return DonHang(ten_hc, tp, gc, khuon_be=4, uoc_tinh=["chipboard, phay rãnh, dựng hộp chờ My chốt"])
     if loai == "thiep":
         w, h = (D or 8), (R or 12)
-        tp = [ThanhPhan("Thiệp" if mau else "Tấm giấy", giay, gsm, w + 0.6, h + 0.6, 1, mau, (mat if spec.get("so_mat") else 2) if mau else 1)]
+        mot_mat = any(k in ten.lower() for k in ("đai", "vòng", "tấm", "tờ rơi"))
+        ten_tp = " ".join(ten.split(" ")[:2]) if (mot_mat and ten) else ("Thiệp" if mau else "Tấm giấy")
+        tp = [ThanhPhan(ten_tp, giay, gsm, w + 0.6, h + 0.6, 1, mau, (mat if spec.get("so_mat") else (1 if mot_mat else 2)) if mau else 1)]
         if "be" not in gc:
             gc.append("cat_tp")
         la_the_bai = any(k in (ten + " " + kieu).lower() for k in ("thẻ bài", "the bai", "hangtag", "tag", "thẻ treo", "nhãn treo"))
@@ -587,7 +589,8 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
         L.append("📋 Giá bán theo bảng decal offset của My (cán bóng, cắt TP, nội suy theo kích thước); vốn bên dưới chỉ để tham khảo.")
     boc = " · ".join(f"{t.split(' (')[0].replace('Công in', 'in').replace(' thành phẩm', '')} {fmt_k(v)}" for t, v in r0["dong"] if v)
     co_san = " Khuôn có sẵn nên không tính tiền khuôn." if getattr(don, "khuon_co_san", False) and don.khuon_be else ""
-    L.append(f"🧾 @{fmt(r0['SL'])}: {boc}. Cố định {fmt_k(r0['co_dinh'])} = {fmt_k(r0['co_dinh'] / r0['SL'])}/cái.{co_san}")
+    cd = f" Cố định {fmt_k(r0['co_dinh'])} = {fmt_k(r0['co_dinh'] / r0['SL'])}/cái." if r0["co_dinh"] else ""
+    L.append(f"🧾 @{fmt(r0['SL'])}: {boc}.{cd}{co_san}")
     khac = tinh(don, r0["SL"], kts=not r0["kts"])
     if r0.get("niem_yet") or not any(tp.so_mau for tp in don.thanh_phan):
         kha_thi = None

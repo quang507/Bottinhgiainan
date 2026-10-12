@@ -275,6 +275,8 @@ def phan_tich(tin: str, da_biet: dict = None):
         if s.get("loai") == "thiep":
             if re.search(r"thẻ bài|hangtag|hang tag|tag treo|thẻ treo|nhãn treo", t): ten = "Thẻ bài"
             elif re.search(r"\btấm\b", t): ten = "Tấm giấy"
+            elif re.search(r"đai", t): ten = "Đai giấy"
+            elif re.search(r"vòng cổ", t): ten = "Vòng cổ hũ"
         if s.get("loai") == "hop_cung" and s.get("kieu_hop"): ten = f"Hộp cứng {s['kieu_hop']}"
         elif s.get("loai") == "hop_gap" and s.get("kieu_hop"): ten = f"Hộp {s['kieu_hop']}" if "hộp" not in s["kieu_hop"] else s["kieu_hop"].capitalize()
         s["san_pham"] = ten
