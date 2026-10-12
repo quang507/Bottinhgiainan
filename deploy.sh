@@ -15,6 +15,6 @@ if [ -n "$1" ]; then
   git add -A
   git -c user.name="Le Quang" -c user.email="explore@nhadat.company" commit -q -m "$1
 
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push -q 2>&1 | grep -v warning || true
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && git push -q 2>&1 | grep -v warning || true
   git log --oneline -1
 fi

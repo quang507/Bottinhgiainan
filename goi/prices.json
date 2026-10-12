@@ -92,7 +92,9 @@
       "ten": "UV định vị",
       "don_vi": "m2",
       "gia": 1500,
-      "san": 300000
+      "san": 300000,
+      "uoc_tinh": true,
+      "_ghi_chu": "Đơn giá do Quang/Claude đặt tạm, My CHƯA xác nhận."
     },
     "be": {
       "ten": "Bế thành phẩm",
@@ -127,7 +129,9 @@
       "ten": "Dán tay",
       "don_vi": "con",
       "gia": 500,
-      "san": 200000
+      "san": 200000,
+      "uoc_tinh": true,
+      "_ghi_chu": "Đơn giá do Quang/Claude đặt tạm, My CHƯA xác nhận."
     },
     "dan_tui": {
       "ten": "Gấp dán túi + xỏ quai",
@@ -159,13 +163,17 @@
       "ten": "Dán support cửa sổ",
       "don_vi": "con",
       "gia": 1000,
-      "san": 300000
+      "san": 300000,
+      "uoc_tinh": true,
+      "_ghi_chu": "Đơn giá do Quang/Claude đặt tạm, My CHƯA xác nhận."
     },
     "xo_day": {
       "ten": "Xỏ dây",
       "don_vi": "con",
       "gia": 1500,
-      "san": 300000
+      "san": 300000,
+      "uoc_tinh": true,
+      "_ghi_chu": "Đơn giá do Quang/Claude đặt tạm, My CHƯA xác nhận."
     },
     "be_hop_cung": {
       "ten": "Bế 4 thành phần hộp cứng",
@@ -429,6 +437,51 @@
         467,
         430
       ]
+    }
+  },
+  "tui_giay": {
+    "_ghi_chu": "Công thức khổ trải túi theo sổ tay My (túi 20×15×8): ngang = 2×(ngang+hông) + mép dán; dọc = mép trên + cao + đáy, đáy = 2/3 hông. Không lọt khổ giấy thì tự chuyển 2 mảnh (mỗi mảnh = ngang + hông + mép dán).",
+    "mep_dan_cm": 2,
+    "mep_tren_cm": 3,
+    "ty_le_day_theo_hong": 0.6667
+  },
+  "dong_hang_chua_gia": {
+    "_ghi_chu": "Các dòng hàng NAHT có làm (theo naht.com.vn + hồ sơ năng lực) nhưng bot CHƯA có bảng giá. Bot nhận diện, hỏi đủ thông số và ghi lại cho My; không tự báo giá.",
+    "nhan_det": {
+      "ten": "Nhãn dệt",
+      "can": "kích thước (rộng × dài mm), số màu chỉ, kiểu gấp/cắt (gấp đôi, gấp 2 đầu, cắt rời), nền satin hay taffeta, số lượng"
+    },
+    "nhan_in_vai": {
+      "ten": "Nhãn in vải (satin, cotton, care label)",
+      "can": "chất liệu (satin/cotton), bản rộng × dài (mm), số màu in, in 1 hay 2 mặt, cắt rời hay để cuộn, số lượng"
+    },
+    "nhan_ep_nhiet": {
+      "ten": "Nhãn ép nhiệt (heat transfer)",
+      "can": "kích thước logo (mm), số màu, ép lên vải gì (cotton, thun, polyester), số lượng"
+    },
+    "ruy_bang": {
+      "ten": "Dây ruy băng in",
+      "can": "chất liệu (satin, gân, cotton), bản rộng (cm), màu dây, số màu in/ép kim, số mét hoặc số cuộn"
+    },
+    "tem_cuon": {
+      "ten": "Tem nhãn cuộn (barcode, tem size)",
+      "can": "kích thước tem (mm), chất liệu (decal giấy, nhựa, PVC), số màu in, số tem/cuộn, tổng số tem"
+    },
+    "giay_cuon_bo_hang": {
+      "ten": "Giấy cuộn bó hàng",
+      "can": "loại giấy, bản rộng (cm), số màu in logo, số mét hoặc số cuộn"
+    },
+    "phu_lieu": {
+      "ten": "Phụ liệu may mặc (dây treo, đạn nhựa, kim băng, kẹp, bìa lưng, gói hút ẩm…)",
+      "can": "tên phụ liệu, quy cách/kích thước, màu, số lượng"
+    },
+    "thung_carton": {
+      "ten": "Thùng / hộp carton sóng",
+      "can": "dài × rộng × cao (cm), số lớp và loại sóng (3 lớp E/B, 5 lớp BC…), kiểu hộp (thùng A1, hộp nắp gài mailer), in mấy màu, số lượng"
+    },
+    "the_nhua": {
+      "ten": "Thẻ nhựa",
+      "can": "kích thước, độ dày, in 1 hay 2 mặt, số lượng"
     }
   }
 }

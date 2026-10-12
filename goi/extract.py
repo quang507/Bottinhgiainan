@@ -34,7 +34,13 @@ class Spec(BaseModel):
     loai: Literal["hop_gap", "hop_cung", "tui_giay", "thiep", "tem_decal", "chua_ro"] = Field(
         description="hop_gap: hộp giấy gập (nắp gài, đáy gài, âm dương giấy, bao diêm giấy). "
                     "hop_cung: hộp cứng bồi chipboard/carton lạnh/bìa cứng. tui_giay: túi giấy có quai. "
-                    "thiep: thiệp, card, tag. tem_decal: tem nhãn decal. chua_ro: không xác định được.")
+                    "thiep: thiệp, card, thẻ bài/hangtag/tag treo giấy (thẻ bài thì gia_cong có 'be', có dây thì thêm 'xo_day'). "
+                    "tem_decal: tem nhãn decal tờ. chua_ro: không xác định được hoặc thuộc dong_hang_khac.")
+    dong_hang_khac: Literal["", "nhan_det", "nhan_in_vai", "nhan_ep_nhiet", "ruy_bang", "tem_cuon", "giay_cuon_bo_hang", "phu_lieu", "thung_carton", "the_nhua"] = Field(
+        description="Chỉ điền khi khách hỏi sản phẩm KHÔNG phải hộp giấy/hộp cứng/túi giấy/thiệp-thẻ bài giấy/tem decal tờ: "
+                    "nhan_det (nhãn dệt, woven label), nhan_in_vai (nhãn in satin/cotton, care label, nhãn mác vải), nhan_ep_nhiet (nhãn ép/chuyển nhiệt), "
+                    "ruy_bang (dây ruy băng, ribbon), tem_cuon (tem nhãn dạng cuộn, barcode, tem size), giay_cuon_bo_hang, "
+                    "phu_lieu (dây treo, đạn nhựa, kim băng, kẹp, bìa lưng, gói hút ẩm, khuy, dây kéo), thung_carton (thùng/hộp carton sóng), the_nhua. Còn lại để rỗng.")
     kieu_hop: str = Field(description="Kiểu kết cấu nếu có: nắp gài, đáy gài, đáy khóa, âm dương, nắp rời, bao diêm, nắp kéo/rút, nam châm. Rỗng nếu không nói.")
     dai: float = Field(description="cm, 0 nếu chưa biết")
     rong: float = Field(description="cm, 0 nếu chưa biết")

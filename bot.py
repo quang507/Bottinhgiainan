@@ -108,6 +108,15 @@ def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
         log.info("Nhận bảng giá từ ảnh: %s", s.get("noi_dung_anh", "")[:500])
         return ("📋 Em đọc được bảng giá trong ảnh: " + (s.get("noi_dung_anh") or "")[:900]
                 + "\n\nBot chưa tự nhập bảng giá vào công thức. Anh Quang sẽ đưa bảng này vào bot (prices.json).")
+    dh = s.get("dong_hang_khac")
+    if dh and dh in engine.P.get("dong_hang_chua_gia", {}):
+        info = engine.P["dong_hang_chua_gia"][dh]
+        state.setdefault("_yeu_cau_ngoai_bang_gia", []).append({"luc": time.time(), "chat": chat_id, "dong_hang": dh, "tin": t[:500]})
+        luu_state()
+        log.info("Yêu cầu ngoài bảng giá [%s]: %s", dh, t[:300])
+        return (f"📌 {info['ten']}: xưởng có làm, nhưng bot chưa có bảng giá cho dòng này nên chưa tự báo được.\n"
+                f"📝 Để My báo giá nhanh, gửi giúp em: {info['can']}.\n"
+                "Em đã ghi lại yêu cầu này.")
     if anh and s.get("loai_anh") in ("khac",) and not s.get("loai"):
         return "Em thấy ảnh nhưng chưa rõ cần tính gì. Anh/chị gửi kèm: loại hộp, kích thước, số lượng, giấy, gia công giúp em."
     state[chat_id] = {"spec": s, "luc": time.time()}

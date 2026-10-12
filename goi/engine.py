@@ -133,7 +133,8 @@ def nen_in_nhanh(don: DonHang, SL: int) -> bool:
     for tp in don.thanh_phan:
         if not tp.so_mau:
             continue
-        u = max(ups(*k["kho"], tp.trai_w, tp.trai_h) for k in K["kho_in_nhanh"])
+        kho_ok = [k for k in K["kho_in_nhanh"] if k.get("gia_2_mat" if tp.so_mat == 2 else "gia_1_mat")]
+        u = max((ups(*k["kho"], tp.trai_w, tp.trai_h) for k in kho_ok), default=0)
         if u == 0:
             return False
         tong_to += SL * tp.con_moi_sp / u
@@ -293,8 +294,8 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             r["dong"].append(("Khuôn " + nhan.split(" (")[0].lower(), khuon_gc))
             tong += khuon_gc
             r["co_dinh"] += khuon_gc
-        if g.get("uoc_tinh") and don.loai_sp != "hop_cung":
-            r["uoc_tinh"].append(g["ten"])
+        if g.get("uoc_tinh") and not (don.loai_sp == "hop_cung" and key in ("phay_ranh", "dung_hop")) and not (kts and key in thay_the):
+            r["uoc_tinh"].append(f"đơn giá {g['ten'].lower()}")
     if kts:
         for ten, f in K["phi_lo"].items():
             if any(k in don.gia_cong for k in f["thay_cho"]):
@@ -424,7 +425,15 @@ def _dung_don(spec: dict) -> DonHang:
         tp = [ThanhPhan("Thiệp" if mau else "Tấm giấy", giay, gsm, w + 0.6, h + 0.6, 1, mau, (mat if spec.get("so_mat") else 2) if mau else 1)]
         if "be" not in gc:
             gc.append("cat_tp")
-        return DonHang(ten or ("Tấm giấy bế" if "be" in gc else "Thiệp"), tp, gc, khuon_be=1 if "be" in gc else 0)
+        la_the_bai = any(k in (ten + " " + kieu).lower() for k in ("thẻ bài", "the bai", "hangtag", "tag", "thẻ treo", "nhãn treo"))
+        mac_dinh_ten = "Thẻ bài" if la_the_bai else ("Tấm giấy bế" if "be" in gc else "Thiệp")
+        uoc = []
+        if la_the_bai:
+            tp[0].ten = "Thẻ bài"
+            if "xo_day" in gc:   # My chưa cho giá dây treo và công xỏ dây cho thẻ bài → không tự đặt số
+                gc = [g for g in gc if g != "xo_day"]
+                uoc.append("CHƯA gồm dây treo và công xỏ dây (My chưa cho giá)")
+        return DonHang(ten or mac_dinh_ten, tp, gc, khuon_be=1 if "be" in gc else 0, uoc_tinh=uoc)
     if loai == "tem_decal":
         tp = [ThanhPhan("Tem decal", "Decal", 1, (D or 5) + 0.4, (R or 5) + 0.4, 1, mau, 1)]
         gc = [g for g in gc if g != "be"]
@@ -432,7 +441,16 @@ def _dung_don(spec: dict) -> DonHang:
             gc.append("be_demi")
         return DonHang(ten or "Tem decal", tp, gc, khuon_be=1)
     if loai == "tui_giay":
-        tp = [ThanhPhan("Túi giấy", giay, gsm, 2 * (D + R) + 3, C + R + 5, 1, mau, 1)]
+        T = P.get("tui_giay", {})
+        mep_dan, mep_tren = T.get("mep_dan_cm", 2), T.get("mep_tren_cm", 3)
+        trai_h = round(mep_tren + C + R * T.get("ty_le_day_theo_hong", 2 / 3), 1)
+        trai_w = 2 * (D + R) + mep_dan
+        hai_manh = bool(spec.get("tui_2_manh")) or not any(ups(W, H, trai_w, trai_h) for W, H in P["kho_giay"])
+        if hai_manh:
+            tp = [ThanhPhan("Túi giấy (2 mảnh)", giay, gsm, D + R + mep_dan, trai_h, 2, mau, 1)]
+            spec["tui_2_manh"] = True
+        else:
+            tp = [ThanhPhan("Túi giấy", giay, gsm, trai_w, trai_h, 1, mau, 1)]
         gc = [g for g in gc if not g.startswith("dan")] + ["be", "dan_tui", "quai_tui"]
         return DonHang(ten or "Túi giấy", tp, gc, khuon_be=1)
 
@@ -507,6 +525,8 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     r0_bai = (ket_qua[0].get("bai_binh") or [None])[0]
     if don.loai_sp in ("hop_gap", "hop_cung", "tui_giay") and r0_bai:
         trai = f" · khổ trải {so(round(r0_bai[3], 1))}×{so(round(r0_bai[4], 1))}"
+    if tp0 and "2 mảnh" in tp0.ten:
+        trai += " mỗi mảnh (túi 2 mảnh)"
     L = [f"📦 {ten} · {quy_cach}" + (" · " + ", ".join(gc) if gc else "") + trai]
     for r in ket_qua:
         duoi = "(theo bảng giá My)" if r.get("niem_yet") else f"(vốn {fmt(r['gia_von'])}, lãi {int(round(r['pct_ln'] * 100))}%)"
