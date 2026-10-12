@@ -197,7 +197,11 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             else:
                 tien_in = cong_in(so_to, tp.so_mau, tp.so_mat)
                 phuong_an.append((so_to * gt + tien_in + tp.so_mau * tp.so_mat * P["gia_kem"], u, so_to, tien_in, tp.so_mau * tp.so_mat, ""))
+            # cộng bế theo nhịp (tờ) vào tiêu chí chọn khổ: ít tờ hơn thì bế rẻ hơn
+            be_key = next((k for k in ("be", "be_hop_cung", "be_demi") if k in don.gia_cong), None)
+            rate_be = P["gia_cong"][be_key]["gia"] if (be_key and P["gia_cong"][be_key].get("don_vi") == "nhip" and not kts) else 0
             for tong_tp, u_, so_to_, tien_in_, kem_, nhan in phuong_an:
+                tong_tp = tong_tp + so_to_ * rate_be
                 if tot_nhat is None or tong_tp < tot_nhat[0]:
                     tot_nhat = (tong_tp, W, H, u_, so_to_, gt, tien_in_, cat, kem_, nhan)
         if tot_nhat is None:
