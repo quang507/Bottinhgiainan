@@ -10,7 +10,7 @@ import anthropic
 import httpx
 from pydantic import BaseModel, Field
 
-MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5")
+MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-5-5")   # bóc tách đơn giản, Haiku đủ và rẻ
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
 
 
