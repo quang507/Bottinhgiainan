@@ -200,6 +200,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             r["uoc_tinh"].append(f"{tp.ten.lower()} chưa tính được, kiểm tra khổ/số mặt")
             continue
         _, W, H, u, so_to, gt, tien_in, cat, kem_tp, nhan = tot_nhat
+        r.setdefault("bai_binh", []).append((W, H, u, tp.trai_w - cat, tp.trai_h))
         if nhan and "(ước tính)" in nhan:
             r["uoc_tinh"].append(nhan)
         elif nhan:
@@ -296,7 +297,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         else:
             KB = P.get("khuon_be_theo_kich_thuoc")
             if KB:
-                dt_bai = max((tp.trai_w * tp.trai_h * ups(65, 86, tp.trai_w, tp.trai_h) for tp in don.thanh_phan), default=KB["full_kho_cm2"])
+                dt_bai = max((u_ * w_ * h_ for (_, _, u_, w_, h_) in r.get("bai_binh", [])), default=KB["full_kho_cm2"])
                 mot_khuon = KB["toi_da"] if don.loai_sp in KB["loai_cao_nhat"] else                     min(KB["toi_da"], max(KB["toi_thieu"], KB["toi_thieu"] + (KB["toi_da"] - KB["toi_thieu"]) * dt_bai / KB["full_kho_cm2"]))
                 kb = don.khuon_be * round(mot_khuon / 10000) * 10000
             else:
@@ -443,10 +444,9 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     if gc_ten:
         L.append("• Gia công: " + ", ".join(gc_ten))
     L.append("")
-    che_do = "in KTS, phí trọn gói lô" if ket_qua[0]["kts"] else "in offset"
-    L.append(f"💰 BÁO GIÁ ({che_do}; chưa VAT {int(P['vat'] * 100)}%, chưa gồm vận chuyển tới khách)")
+    L.append(f"💰 BÁO GIÁ (chưa VAT {int(P['vat'] * 100)}%, chưa gồm vận chuyển tới khách; KTS = in nhanh phí trọn gói lô)")
     for r in ket_qua:
-        L.append(f"🔹 {fmt(r['SL'])} cái: {fmt(r['gia_ban_tron'])} đ/cái · tổng {fmt(r['gia_ban_tron'] * r['SL'])} đ "
+        L.append(f"🔹 {fmt(r['SL'])} cái ({'KTS' if r['kts'] else 'offset'}): {fmt(r['gia_ban_tron'])} đ/cái · tổng {fmt(r['gia_ban_tron'] * r['SL'])} đ "
                  f"(chi phí {fmt(r['chi_phi'])} đ = {fmt_vn(r['gia_von'])} đ/cái, lãi {int(round(r['pct_ln'] * 100))}%)")
     r0 = ket_qua[0]
     L.append("")
