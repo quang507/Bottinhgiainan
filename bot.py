@@ -27,7 +27,7 @@ CHO_HOI_LAI = {"loai", "dai", "rong", "so_luong"}
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("goi-bot")
 logging.getLogger("httpx").setLevel(logging.WARNING)   # không ghi URL chứa token vào log
-client = anthropic.Anthropic()
+client = anthropic.Anthropic() if os.environ.get("ANTHROPIC_API_KEY") else None
 http = httpx.Client(timeout=60)
 
 state: dict = json.loads(STATE_FILE.read_text(encoding="utf-8")) if STATE_FILE.exists() else {}
@@ -144,7 +144,8 @@ def xu_ly(update: dict):
 
 def main():
     me = api("getMe")
-    log.info("Bot: %s", me.get("result"))
+    from goi.extract import provider, GEMINI_MODEL, MODEL
+    log.info("Bot: %s | LLM: %s", me.get("result"), GEMINI_MODEL if provider() == "gemini" else MODEL)
     while True:
         try:
             data = api("getUpdates", timeout=30)

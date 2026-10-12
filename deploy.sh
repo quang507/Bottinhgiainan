@@ -7,7 +7,7 @@ python -X utf8 -m py_compile bot.py goi/engine.py goi/extract.py
 python -X utf8 -m goi.engine | tail -1 | grep -q "KHỚP EXCEL"
 [ -n "$SKIP_SMOKE" ] || python -X utf8 tests/smoke.py
 ssh $VPS 'mkdir -p /opt/goi-bot/goi /opt/goi-bot/deploy'
-scp -q bot.py requirements.txt $VPS:/opt/goi-bot/
+scp -q bot.py requirements.txt .env $VPS:/opt/goi-bot/
 scp -q goi/*.py goi/prices.json $VPS:/opt/goi-bot/goi/
 scp -q deploy/goi-bot.service $VPS:/opt/goi-bot/deploy/
 ssh $VPS 'systemctl restart goi-bot; sleep 4; systemctl is-active goi-bot; journalctl -u goi-bot -n 2 --no-pager -o cat'

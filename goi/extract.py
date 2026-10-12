@@ -3,12 +3,23 @@
 Lưu ý API: schema structured output chỉ cho tối đa 16 trường union/nullable, nên ở đây KHÔNG dùng Optional.
 Giá trị "chưa nói" dùng sentinel (0, "", [], -1) và được đổi về None trong chuan_hoa()."""
 import json
+import os
 from typing import List, Literal
 
 import anthropic
+import httpx
 from pydantic import BaseModel, Field
 
-MODEL = "claude-opus-5-5"
+MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
+
+
+def provider() -> str:
+    """'gemini' nếu có GEMINI_API_KEY (miễn phí, mặc định), 'claude' nếu LLM_PROVIDER=claude."""
+    p = os.environ.get("LLM_PROVIDER", "").lower()
+    if p in ("gemini", "claude"):
+        return p
+    return "gemini" if os.environ.get("GEMINI_API_KEY") else "claude"
 
 GiaCong = Literal["can_mo", "can_bong", "ep_kim", "dap_noi", "uv_dinh_vi", "be", "dan_may", "dan_tay", "dan_tui", "boi_giay", "cua_so", "xo_day"]
 
@@ -101,12 +112,58 @@ def chuan_hoa(spec: "Spec") -> dict:
     return d
 
 
+def _schema_gemini() -> dict:
+    """JSON schema của Spec, inline $defs (Gemini không nhận $ref)."""
+    sch = Spec.model_json_schema()
+    defs = sch.pop("$defs", {})
+
+    def deref(o):
+        if isinstance(o, dict):
+            if "$ref" in o:
+                return deref(defs[o["$ref"].split("/")[-1]])
+            return {k: deref(v) for k, v in o.items() if k not in ("title",)}
+        if isinstance(o, list):
+            return [deref(x) for x in o]
+        return o
+    return deref(sch)
+
+
+def _goi_gemini(noi_dung: str, anh: tuple = None) -> "Spec":
+    key = os.environ["GEMINI_API_KEY"]
+    parts = []
+    if anh:
+        parts.append({"inline_data": {"mime_type": anh[0], "data": anh[1]}})
+    parts.append({"text": noi_dung})
+    if anh:
+        parts.append({"text": "Có ảnh kèm theo: phân loại vào loai_anh và mô tả vào noi_dung_anh. Nếu là ảnh sản phẩm/khuôn, lấy thông số từ ảnh."})
+    body = {
+        "system_instruction": {"parts": [{"text": SYSTEM}]},
+        "contents": [{"role": "user", "parts": parts}],
+        "generationConfig": {"responseMimeType": "application/json", "responseJsonSchema": _schema_gemini(), "temperature": 0},
+    }
+    r = httpx.post(f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+                   params={"key": key}, json=body, timeout=60)
+    if r.status_code != 200:
+        raise RuntimeError(f"Gemini {r.status_code}: {r.text[:300]}")
+    text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+    return Spec.model_validate(json.loads(text))
+
+
 def boc_tach(client: anthropic.Anthropic, tin_moi: str, da_biet: dict = None, anh: tuple = None) -> dict:
     """anh = (media_type, base64) nếu khách gửi ảnh; tin_moi khi đó là caption (có thể rỗng)."""
     noi_dung = ""
     if da_biet:
         noi_dung += "THÔNG SỐ ĐÃ BIẾT (từ các tin trước):\n" + json.dumps(da_biet, ensure_ascii=False) + "\n\n"
     noi_dung += "TIN NHẮN MỚI:\n" + (tin_moi or "(khách gửi ảnh, không có chữ)")
+    if provider() == "gemini":
+        try:
+            return chuan_hoa(_goi_gemini(noi_dung, anh))
+        except RuntimeError as e:
+            # hết credit / quá hạn mức Gemini → thử Claude nếu có key
+            if client is None or not any(c in str(e) for c in ("402", "429", "RESOURCE_EXHAUSTED")):
+                raise
+    if client is None:
+        raise RuntimeError("Chưa cấu hình LLM nào có tiền (GEMINI_API_KEY hoặc ANTHROPIC_API_KEY)")
     content = [{"type": "text", "text": noi_dung}]
     if anh:
         content.insert(0, {"type": "image", "source": {"type": "base64", "media_type": anh[0], "data": anh[1]}})
