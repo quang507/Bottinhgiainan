@@ -219,7 +219,8 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         tien_giay = so_to * gt
         tong_nhip += so_to
         dien_tich_sp += tp.trai_w * tp.trai_h * tp.con_moi_sp / 10000
-        r["dong"].append((f"{tp.ten} {tp.loai} {tp.gsm}g ({u} con/tờ {W}×{H}, {fmt(so_to)} tờ)", tien_giay))
+        nhan_giay = "Decal giấy" if tp.loai == "Decal" else f"{tp.ten} {tp.loai} {tp.gsm}g"
+        r["dong"].append((f"{nhan_giay} ({u} con/tờ {W}×{H}, {fmt(so_to)} tờ)", tien_giay))
         if tien_in:
             r["dong"].append(((f"In KTS {fmt(so_to)} tờ" if kts else f"Công in {tp.so_mau} màu {tp.so_mat} mặt") + f" {tp.ten.lower()}", tien_in))
         tong += tien_giay + tien_in
@@ -358,10 +359,11 @@ def dung_don(spec: dict) -> DonHang:
     don.can_mang_2_mat = bool(spec.get("can_mang_2_mat"))
     don.loai_sp = spec.get("loai") or "hop_gap"
     don.gc_tuy_chinh = [(g["ten"], g["gia_moi_cai"]) for g in (spec.get("gia_cong_tuy_chinh") or [])]
-    if not spec.get("giay"):
-        don.mac_dinh.append(f"giấy {don.thanh_phan[0].loai}")
-    if not spec.get("dinh_luong"):
-        don.mac_dinh.append(f"định lượng {don.thanh_phan[0].gsm}g")
+    if don.loai_sp != "tem_decal":
+        if not spec.get("giay"):
+            don.mac_dinh.append(f"giấy {don.thanh_phan[0].loai}")
+        if not spec.get("dinh_luong"):
+            don.mac_dinh.append(f"định lượng {don.thanh_phan[0].gsm}g")
     if spec.get("so_mau") is None:
         don.mac_dinh.append(f"in {don.thanh_phan[0].so_mau} màu")
     if not spec.get("so_mat"):
@@ -461,9 +463,12 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     """Một tin Zalo gọn: quy cách · giá 3 mức · bóc tách 1 dòng · so sánh · ước tính/mặc định · chính sách."""
     kt = "×".join(str(x) for x in (spec.get("dai"), spec.get("rong"), spec.get("cao")) if x)
     tp0 = don.thanh_phan[0] if don.thanh_phan else None
-    quy_cach = f"{tp0.loai} {tp0.gsm}g, in {tp0.so_mau} màu {tp0.so_mat} mặt" if tp0 else ""
+    def ten_giay(tp):
+        return "Decal giấy" if tp.loai == "Decal" else f"{tp.loai} {tp.gsm}g"
+    quy_cach = f"{ten_giay(tp0)}, in {tp0.so_mau} màu {tp0.so_mat} mặt" if tp0 else ""
     gc = [P["gia_cong"][g]["ten"] for g in don.gia_cong if g in P["gia_cong"]] + [f"{t} {fmt(g)}đ" for t, g in don.gc_tuy_chinh]
-    L = [f"📦 {don.ten} {kt} cm · {quy_cach}" + (" · " + ", ".join(gc) if gc else "")]
+    ten = don.ten if (kt and kt.replace("×", "x") in don.ten.replace("×", "x").replace(".0", "")) else f"{don.ten} {kt} cm"
+    L = [f"📦 {ten} · {quy_cach}" + (" · " + ", ".join(gc) if gc else "")]
     for r in ket_qua:
         L.append(f"🔹 {fmt(r['SL'])} cái ({'KTS' if r['kts'] else 'offset'}): {fmt(r['gia_ban_tron'])} đ/cái · {fmt(r['gia_ban_tron'] * r['SL'])} đ "
                  f"(vốn {fmt(r['gia_von'])}, lãi {int(round(r['pct_ln'] * 100))}%)")
