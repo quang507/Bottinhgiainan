@@ -98,6 +98,10 @@ def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
 
     da_biet = state.get(chat_id, {}).get("spec")
     s = boc_tach(client, t, da_biet, anh)
+    if s.get("y_dinh") == "tom_tat" and state.get(chat_id, {}).get("tom_tat"):
+        return state[chat_id]["tom_tat"]
+    if s.get("y_dinh") == "khac" and not anh and not s.get("so_luong") and not s.get("dai"):
+        return "Dạ em là bot báo giá. Anh/chị gửi: loại hộp/túi/thiệp, kích thước, số lượng, giấy, gia công là em tính liền ạ."
     if anh and s.get("loai_anh") == "bang_gia":
         state.setdefault("_bang_gia_nhan", []).append({"luc": time.time(), "chat": chat_id, "noi_dung": s.get("noi_dung_anh", "")})
         luu_state()
@@ -115,6 +119,11 @@ def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
         return s["cau_hoi"] or ("Cho em xin thêm: " + ", ".join(thieu) + " ạ.")
     don = engine.dung_don(s)
     ket_qua = [engine.tinh(don, q) for q in bac_so_luong(s["so_luong"])]
+    r0 = ket_qua[0]
+    state[chat_id]["tom_tat"] = (f"💰 {don.ten}: {engine.fmt(r0['gia_ban_tron'])} đ/cái cho {engine.fmt(r0['SL'])} cái, "
+                                 f"tổng {engine.fmt(r0['gia_ban_tron'] * r0['SL'])} đ (chưa VAT 8%, chưa vận chuyển)."
+                                 + ("".join(f" {engine.fmt(r['SL'])} cái: {engine.fmt(r['gia_ban_tron'])} đ." for r in ket_qua[1:])))
+    luu_state()
     return engine.soan_tin(s, don, ket_qua)
 
 

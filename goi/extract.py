@@ -67,6 +67,7 @@ class Spec(BaseModel):
     kieu_in_2_mat: Literal["AB", "tu_tro", "tro_nhip", ""] = Field(description="Chỉ khi in 2 mặt và tin nói rõ: bình AB/sheet-wise → AB; tự trở/work and turn → tu_tro; trở nhíp/work and tumble → tro_nhip; rỗng nếu không nói")
     loai_anh: Literal["san_pham", "khuon", "bang_gia", "khac", ""] = Field(description="Chỉ khi có ảnh kèm: ảnh sản phẩm/mockup → san_pham; file khuôn/dieline → khuon; bảng giá → bang_gia; khác → khac. Không có ảnh → rỗng.")
     noi_dung_anh: str = Field(description="Chỉ khi có ảnh: mô tả ngắn nội dung ảnh (ví dụ bảng giá thì liệt kê các dòng giá; khuôn thì ghi kích thước trải nếu đọc được). Không có ảnh → rỗng.")
+    y_dinh: Literal["bao_gia", "tom_tat", "khac"] = Field(description="bao_gia: tin có thông số sản phẩm mới hoặc bổ sung. tom_tat: chỉ hỏi lại giá/tóm tắt/giá 1 cái của báo giá vừa rồi, không thêm thông số nào. khac: chào hỏi, cảm ơn, nói chuyện khác.")
     in_kts: Literal["kts", "offset", ""] = Field(description="kts nếu tin nói in KTS / kỹ thuật số / in nhanh; offset nếu nói rõ in offset; rỗng nếu không nói")
 
 

@@ -220,7 +220,10 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
         tong_nhip += so_to
         dien_tich_sp += tp.trai_w * tp.trai_h * tp.con_moi_sp / 10000
         nhan_giay = "Decal giấy" if tp.loai == "Decal" else f"{tp.ten} {tp.loai} {tp.gsm}g"
-        r["dong"].append((f"{nhan_giay} ({u} con/tờ {W}×{H}, {fmt(so_to)} tờ)", tien_giay))
+        def _so(x):
+            return str(int(x)) if float(x).is_integer() else f"{x:.1f}"
+        trai = f"trải {_so(tp.trai_w - cat)}×{_so(tp.trai_h)}, " if don.loai_sp in ("hop_gap", "hop_cung", "tui_giay") else ""
+        r["dong"].append((f"{nhan_giay} ({trai}{u} con/tờ {W}×{H}, {fmt(so_to)} tờ)", tien_giay))
         if tien_in:
             r["dong"].append(((f"In KTS {fmt(so_to)} tờ" if kts else f"Công in {tp.so_mau} màu {tp.so_mat} mặt") + f" {tp.ten.lower()}", tien_in))
         tong += tien_giay + tien_in
@@ -377,7 +380,7 @@ def dung_don(spec: dict) -> DonHang:
         don.mac_dinh.append(f"{don.thanh_phan[0].so_mat} mặt")
     if not spec.get("gia_cong") and not don.gc_tuy_chinh:
         don.mac_dinh.append("gia công cơ bản (bế, dán)")
-    if not don.kho:
+    if not don.kho and don.loai_sp in ("hop_gap", "hop_cung", "tui_giay"):
         don.uoc_tinh.append("khổ trải tính từ kích thước (chưa có file khuôn)")
     if don.loai_sp in ("hop_gap", "tui_giay") and don.thanh_phan and don.thanh_phan[0].gsm >= 300 \
             and not any(g in don.gia_cong for g in ("can_mo", "can_bong")):
@@ -520,7 +523,7 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     md = r0["mac_dinh"]
     can_them = []
     if any("khổ trải" in u for u in uoc):
-        can_them.append("file khuôn hoặc khổ trải")
+        can_them.append("file khuôn để chốt khổ trải (bot đang tự tính, xem dòng 🧾)")
     if any(m.startswith("giấy") or m.startswith("định lượng") for m in md):
         can_them.append("loại giấy, định lượng")
     if any("gia công" in m for m in md):
