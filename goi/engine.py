@@ -632,9 +632,56 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     if canh_bao:
         dong.append("⚠️ " + " ".join(m.split("→ ", 1)[1] for m in canh_bao))
     L.append(" ".join(dong))
-    L.append("📎 Chưa VAT 8%, chưa vận chuyển, không tặng khuôn. SX 7–10 ngày sau duyệt file, mẫu 3–7 ngày.")
+    L.append("📎 Chưa VAT 8%, chưa vận chuyển, không tặng khuôn. Gõ 'gửi khách' để lấy bản báo giá gửi khách.")
     msg = "\n".join(L)
     return msg if len(msg) <= 1990 else msg[:1985] + "…"
+
+
+def soan_tin_khach(spec: dict, don: DonHang, ket_qua: list) -> str:
+    """Bản gửi khách: cùng bố cục file báo giá PDF của NAHT, không có giá vốn / lãi / bóc tách."""
+    def so(x):
+        return str(int(x)) if float(x).is_integer() else str(x)
+    kt = "x".join(so(x) for x in (spec.get("dai"), spec.get("rong"), spec.get("cao")) if x)
+    r0 = ket_qua[0]
+    L = [f"BÁO GIÁ: {don.ten}" + (f" KT {kt}cm" if kt and kt not in don.ten.replace("×", "x") else "")]
+    tp0 = don.thanh_phan[0]
+    if don.loai_sp == "hop_cung":
+        L.append(f"- Giấy áo {tp0.loai} {tp0.gsm}gsm, lót ruột trơn")
+        L.append("- Bồi giấy Chipboard 2mm")
+    elif tp0.loai == "Decal":
+        L.append("- Decal giấy")
+    else:
+        L.append(f"- Giấy {tp0.loai} {tp0.gsm}gsm")
+    if tp0.so_mau:
+        L.append(f"- In {'KTS' if r0['kts'] else 'offset'} {tp0.so_mau} màu {tp0.so_mat} mặt")
+    else:
+        L.append("- Không in")
+    bo_qua = ("dan_may", "dan_tay", "be", "be_hop_cung", "phay_ranh", "dung_hop", "boi_hop_cung", "cat_tp", "quai_tui", "dan_tui", "boi_nap_keo")
+    for g in don.gia_cong:
+        if g in P["gia_cong"] and g not in bo_qua:
+            ten = P["gia_cong"][g]["ten"]
+            if g in ("can_mo", "can_bong"):
+                ten += " 2 mặt" if don.can_mang_2_mat else " 1 mặt"
+            L.append(f"- {ten}")
+    for ten, _ in don.gc_tuy_chinh:
+        if not any(k in ten.lower() for k in ("bế", "dán")):
+            L.append(f"- {ten}")
+    ket = {"hop_cung": "Bồi, bế thành phẩm hộp cứng", "tui_giay": "Bế, dán thành phẩm, xỏ quai", "tem_decal": "Bế demi thành phẩm"}.get(don.loai_sp)
+    if not ket:
+        ket = "Bế, dán thành phẩm" if don.loai_sp == "hop_gap" else ("Bế thành phẩm" if "be" in don.gia_cong else "Cắt thành phẩm")
+    L.append(f"- {ket}")
+    L.append("")
+    vat = P["vat"]
+    for r in ket_qua:
+        tt = r["gia_ban_tron"] * r["SL"]
+        L.append(f"• {fmt(r['SL'])} cái: {fmt(r['gia_ban_tron'])} đ/cái · thành tiền {fmt(tt)} đ · gồm VAT {int(vat * 100)}%: {fmt(tt * (1 + vat))} đ")
+    L.append("")
+    L.append("Thời gian sản xuất: 7-10 ngày kể từ ngày chốt đơn hàng. Thời gian mẫu: 3-7 ngày kể từ ngày chốt mẫu.")
+    L.append("Giá chưa gồm phí vận chuyển. Báo giá có hiệu lực 30 ngày.")
+    canh = [u for u in dict.fromkeys(r0["uoc_tinh"]) if any(k in u for k in ("My chốt", "kết cấu đặc biệt", "CHƯA gồm", "em tính k"))]
+    if canh:
+        L.insert(0, "(Nội bộ, xoá dòng này trước khi gửi: còn khoản tạm tính, My duyệt giá trước. " + "; ".join(canh) + ")")
+    return "\n".join(L)
 
 
 if __name__ == "__main__":

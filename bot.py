@@ -1,5 +1,6 @@
 """Zalo Bot báo giá GÓI - long-polling getUpdates. Chạy: python bot.py (đọc .env)."""
 import json
+import re
 import logging
 import os
 import sys
@@ -94,11 +95,13 @@ def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
                 f"• Kẽm {f(p['gia_kem'])} đ/bản · in offset tối thiểu 1 màu {f(p['cong_in_toi_thieu_theo_mau']['1'])}, 4 màu {f(p['cong_in_toi_thieu_theo_mau']['4'])} đ\n"
                 f"• Cán mờ {f(p['gia_cong']['can_mo']['gia'])} đ/m², bóng {f(p['gia_cong']['can_bong']['gia'])} đ/m² · bế {p['gia_cong']['be']['gia']} đ/nhịp · khuôn {f(p['khuon_be_theo_kich_thuoc']['toi_thieu'])}–{f(p['khuon_be_theo_kich_thuoc']['toi_da'])} đ\n"
                 f"• Vận chuyển nội bộ {int(p['pct_van_chuyen'] * 100)}% · lãi: {ln}")
+    if len(lower) < 40 and re.search(r"gửi khách|gui khach|bản khách|ban khach|tin khách|báo giá khách|bản gửi", lower):
+        return state.get(chat_id, {}).get("ban_khach") or "Chưa có báo giá nào trong chat này. Gửi yêu cầu trước rồi gõ 'gửi khách'."
     if lower in ("chính sách", "chinh sach", "điều khoản", "/chinhsach"):
         return chr(10).join("📎 " + d for d in engine.P.get("chinh_sach", {}).get("dong", []))
     if lower in ("help", "/help", "hướng dẫn", "?"):
         return ("Gửi yêu cầu một tin, ví dụ:\n'100 hộp âm dương 30x25x5, Ivory 300, in 4 màu, cán mờ, ép kim logo'\n"
-                "Bot sẽ hỏi lại nếu thiếu, rồi báo giá 3 bậc số lượng. Gõ 'chính sách' xem điều khoản, 'reset' làm đơn mới, 'giá' xem bảng giá.")
+                "Bot sẽ hỏi lại nếu thiếu, rồi báo giá 3 bậc số lượng. Gõ 'gửi khách' lấy bản báo giá gửi khách, 'chính sách' xem điều khoản, 'reset' làm đơn mới, 'giá' xem bảng giá.")
 
     da_biet = state.get(chat_id, {}).get("spec")
     rs, chac, _ = parse_rules.phan_tich(t, da_biet)
@@ -155,6 +158,7 @@ def tra_loi(chat_id: str, text: str, anh: tuple = None) -> str:
     state[chat_id]["tom_tat"] = (f"💰 {don.ten}: {engine.fmt(r0['gia_ban_tron'])} đ/cái cho {engine.fmt(r0['SL'])} cái, "
                                  f"tổng {engine.fmt(r0['gia_ban_tron'] * r0['SL'])} đ (chưa VAT 8%, chưa vận chuyển)."
                                  + ("".join(f" {engine.fmt(r['SL'])} cái: {engine.fmt(r['gia_ban_tron'])} đ." for r in ket_qua[1:])))
+    state[chat_id]["ban_khach"] = engine.soan_tin_khach(s, don, ket_qua)
     luu_state()
     return engine.soan_tin(s, don, ket_qua) + canh_bao
 
