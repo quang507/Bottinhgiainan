@@ -46,6 +46,9 @@ class DonHang:
     tui_2_manh: bool = False
     gia_quai: float = None
     can_mang_2_mat: bool = False
+    uv_kt: tuple = None              # vùng UV định hình (cm)
+    cua_so_kt: tuple = None          # kích thước cửa sổ (cm)
+    day_2_gut: bool = False          # dây treo thẻ bài thắt 2 gút
 
     @property
     def co_kho_trai(self) -> bool:
@@ -54,6 +57,10 @@ class DonHang:
     @property
     def bot_tai_dan(self) -> bool:
         return dac_tinh(self.loai_sp)["bot_tai_dan"]
+
+    @property
+    def khuon_don_gian(self) -> bool:
+        return bool(dac_tinh(self.loai_sp).get("khuon_don_gian"))
 
     @property
     def co_in(self) -> bool:
@@ -87,7 +94,7 @@ def _hop_cung(v: _DauVao) -> DonHang:
         gc.append("boi_nap_keo")
     ten = v.ten or ("Hộp cứng nắp kéo (bao diêm)" if nap_keo else "Hộp cứng âm dương / nắp rời")
     # 4 khuôn bế: áo nắp, áo đáy, carton nắp, carton đáy (theo My)
-    return DonHang(ten, tp, gc, khuon_be=4, uoc_tinh=["chipboard, phay rãnh, dựng hộp chờ My chốt"])
+    return DonHang(ten, tp, gc, khuon_be=4, uoc_tinh=["đơn giá dựng hộp chờ My chốt"])
 
 
 def _thiep(v: _DauVao) -> DonHang:
@@ -105,9 +112,8 @@ def _thiep(v: _DauVao) -> DonHang:
     uoc = []
     if la_the_bai:
         tp[0].ten = "Thẻ bài"
-        if "xo_day" in gc:   # My chưa cho giá dây treo và công xỏ dây cho thẻ bài → không tự đặt số
-            gc = [g for g in gc if g != "xo_day"]
-            uoc.append("CHƯA gồm dây treo và công xỏ dây (My chưa cho giá)")
+        if "xo_day" in gc:   # thẻ bài: My tính theo dây treo (1 gút 200 đ, 2 gút 300 đ), không tính công xỏ dây riêng
+            gc = [("day_treo" if g == "xo_day" else g) for g in gc]
     return DonHang(v.ten or ten_mac_dinh, tp, gc, khuon_be=1 if "be" in gc else 0, uoc_tinh=uoc)
 
 
@@ -205,7 +211,7 @@ def _ap_tuy_chinh(don: DonHang, spec: dict) -> None:
     don.proof = not spec.get("khong_proof")
     don.kts = spec.get("in_kts")
     if don.kts is None and don.loai_sp == "hop_cung":
-        don.kts = False            # báo giá thật của My: hộp cứng in offset
+        don.kts = False            # My: hộp cứng luôn in offset, kể cả dưới 100 cái, vì in nhanh không đủ khổ
     don.khuon_co_san = bool(spec.get("khuon_co_san"))
     don.kieu_2_mat = spec.get("kieu_in_2_mat")
     don.ep_kim_kt = tuple(spec["ep_kim_kt"]) if spec.get("ep_kim_kt") else None
@@ -216,6 +222,9 @@ def _ap_tuy_chinh(don: DonHang, spec: dict) -> None:
     don.tui_2_manh = don.tui_2_manh or bool(spec.get("tui_2_manh"))
     don.gia_quai = spec.get("gia_quai")
     don.can_mang_2_mat = bool(spec.get("can_mang_2_mat"))
+    don.uv_kt = tuple(spec["uv_kt"]) if spec.get("uv_kt") else None
+    don.cua_so_kt = tuple(spec["cua_so_kt"]) if spec.get("cua_so_kt") else None
+    don.day_2_gut = bool(spec.get("day_2_gut"))
     don.gc_tuy_chinh = [(g["ten"], g["gia_moi_cai"]) for g in (spec.get("gia_cong_tuy_chinh") or [])]
 
 

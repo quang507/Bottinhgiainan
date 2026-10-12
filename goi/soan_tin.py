@@ -63,6 +63,8 @@ def _dong_gia(r) -> str:
         chu_thich = "theo bảng giá My"
     else:
         chu_thich = ("in nhanh, " if r["kts"] else "offset, ") + f"vốn {fmt(r['gia_von'])}, lãi {int(round(r['pct_ln'] * 100))}%"
+        if r.get("phu_thu_ban"):
+            chu_thich += f", cộng nắp kéo {fmt_k(r['phu_thu_ban'])}"
     return f"🔹 {fmt(r['SL'])} cái: giá bán {fmt(r['gia_ban_tron'])} đ/cái · tổng {fmt(r['gia_ban_tron'] * r['SL'])} đ ({chu_thich})"
 
 
@@ -93,9 +95,9 @@ GOI_Y_GUI_THEM = [
     (lambda uoc, md: any("khổ trải" in u for u in uoc), "file khuôn để chốt khổ trải (bot đang tự tính, xem dòng đầu)"),
     (lambda uoc, md: any(m.startswith("giấy") or m.startswith("định lượng") for m in md), "loại giấy, định lượng"),
     (lambda uoc, md: any("gia công" in m for m in md), "gia công cần làm (cán màng, ép kim…)"),
-    (lambda uoc, md: any("vùng" in m for m in md), "kích thước vùng ép kim/dập nổi"),
+    (lambda uoc, md: any("vùng" in m for m in md), "kích thước vùng ép kim, dập nổi, UV hoặc cửa sổ"),
     (lambda uoc, md: any("quai" in m for m in md), "loại dây quai"),
-    (lambda uoc, md: any("My chốt" in u for u in uoc), "đơn giá hộp cứng (chờ My)"),
+    (lambda uoc, md: any("My chốt" in u for u in uoc), "đơn giá dựng hộp (chờ My)"),
 ]
 
 

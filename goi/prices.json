@@ -8,7 +8,7 @@
     "Bristol": 19,
     "Ivory": 17,
     "Ford": 21,
-    "Chipboard": 13.0
+    "Chipboard": 12.0
   },
   "decal_gia_m2": 11000,
   "kho_giay": [
@@ -75,8 +75,8 @@
       "don_vi": "cm2",
       "gia": 3,
       "san": 300000,
-      "khuon": 300000,
-      "_ghi_chu": "My: dài × rộng (cm) × 3đ/con"
+      "khuon_cm2": 2000,
+      "_ghi_chu": "My: ép kim dài × rộng (cm) × 3 đ/con. Khuôn ép kim 2.000 đ theo diện tích ép (My ghi 'đ/m2', bot hiểu là đ/cm² vì theo m² thì gần bằng 0)."
     },
     "dap_noi": {
       "ten": "Dập nổi",
@@ -84,53 +84,38 @@
       "gia": 4,
       "gia_am_duong": 8,
       "san": 300000,
-      "khuon": 300000,
-      "_ghi_chu": "My: dài × rộng × 4đ (1 khuôn); âm dương ×8đ (2 khuôn)"
+      "khuon_cm2": 2200,
+      "_ghi_chu": "My: dập nổi × 4 đ (1 khuôn), âm dương × 8 đ (2 khuôn). Khuôn dập nổi 2.200 đ theo diện tích ép (bot hiểu là đ/cm²)."
     },
     "uv_dinh_vi": {
-      "ten": "UV định vị",
-      "don_vi": "m2",
-      "gia": 1500,
+      "ten": "UV định hình",
+      "don_vi": "cm2",
+      "gia": 3.5,
       "san": 300000,
-      "uoc_tinh": true,
-      "_ghi_chu": "Đơn giá do Quang/Claude đặt tạm, My CHƯA xác nhận."
+      "_ghi_chu": "My: UV định hình 3–4 đ/cm² (bot lấy 3,5). Tối thiểu lô 300k là bot đặt theo các công đoạn khác."
     },
     "be": {
       "ten": "Bế thành phẩm",
       "don_vi": "nhip",
       "gia": 750,
-      "gia_toi_thieu": 450,
-      "bac_nhip": [
-        [
-          1000,
-          750
-        ],
-        [
-          3000,
-          600
-        ],
-        [
-          999999999,
-          450
-        ]
-      ],
+      "gia_khuon_don_gian": 450,
       "san": 300000,
-      "_ghi_chu": "My: 750đ/nhịp, giảm theo số lượng tới tối thiểu 450đ/nhịp, lô ≥300k. Bậc 1000/3000 nhịp do Quang đặt."
+      "_ghi_chu": "My 12/10: 750 đ/nhịp với khuôn nhiều chi tiết bên trong (hộp, túi); 450 đ/nhịp với khuôn chỉ có viền (thẻ, tấm, tem). Ít nhất 300k/lô."
     },
     "dan_may": {
       "ten": "Dán hộp",
       "don_vi": "mep",
-      "gia": 150,
-      "san": 150000,
-      "_ghi_chu": "My: 150đ/mép dán/con"
+      "gia": 100,
+      "toi_thieu_moi_cai": 200,
+      "san": 300000,
+      "_ghi_chu": "My: khoảng 100 đ/mép dán, hộp 200–300 đ/cái tùy công. Tối thiểu lô 300k theo sổ tay BG00874 (Dán + đẩy 300K)."
     },
     "dan_tay": {
       "ten": "Dán tay",
       "don_vi": "con",
-      "gia": 500,
-      "san": 200000,
-      "uoc_tinh": true,
-      "_ghi_chu": "Đơn giá do Quang/Claude đặt tạm, My CHƯA xác nhận."
+      "gia": 300,
+      "san": 300000,
+      "_ghi_chu": "My: hộp 200–300 đ/cái nhìn theo công dán."
     },
     "dan_tui": {
       "ten": "Gấp dán túi + xỏ quai",
@@ -159,50 +144,34 @@
       "san": 300000
     },
     "cua_so": {
-      "ten": "Dán support cửa sổ",
-      "don_vi": "con",
-      "gia": 1000,
+      "ten": "Dán cửa sổ",
+      "don_vi": "cm2",
+      "gia": 3,
       "san": 300000,
-      "uoc_tinh": true,
-      "_ghi_chu": "Đơn giá do Quang/Claude đặt tạm, My CHƯA xác nhận."
+      "_ghi_chu": "My: dán cửa sổ 1 lô 300k, 3 đ/cm² theo diện tích cửa sổ."
     },
     "xo_day": {
       "ten": "Xỏ dây",
       "don_vi": "con",
-      "gia": 1500,
-      "san": 300000,
+      "gia": 800,
+      "san": 0,
       "uoc_tinh": true,
-      "_ghi_chu": "Đơn giá do Quang/Claude đặt tạm, My CHƯA xác nhận."
+      "_ghi_chu": "My: dán túi/xỏ dây 100–1.500 đ/cái chưa gồm dây, nhìn theo công. Bot lấy 800 đ, còn ước tính. Lô in nhanh: cửa sổ + dây chung một khoản support tối thiểu 300k (sổ BG00874)."
     },
     "be_hop_cung": {
       "ten": "Bế 4 thành phần hộp cứng",
       "don_vi": "nhip",
       "gia": 750,
-      "gia_toi_thieu": 450,
-      "bac_nhip": [
-        [
-          1000,
-          750
-        ],
-        [
-          3000,
-          600
-        ],
-        [
-          999999999,
-          450
-        ]
-      ],
       "san": 300000,
       "san_moi_khuon": 300000,
-      "_ghi_chu": "Hộp cứng 4 khuôn = 4 lô bế, mỗi lô tối thiểu 300k (My: bế 750đ/nhịp, 1 lô ít nhất 300k)."
+      "_ghi_chu": "My 12/10: 750 đ/nhịp với khuôn nhiều chi tiết bên trong (hộp, túi); 450 đ/nhịp với khuôn chỉ có viền (thẻ, tấm, tem). Ít nhất 300k/lô. Hộp cứng 4 khuôn: bot tính 4 lô × 300k (suy từ báo giá BG00865, chờ My xác nhận)."
     },
     "phay_ranh": {
       "ten": "Phay rãnh chipboard",
-      "don_vi": "con",
-      "gia": 2000,
+      "don_vi": "met_toi",
+      "gia": 3,
       "san": 300000,
-      "uoc_tinh": true
+      "_ghi_chu": "My: phay tối thiểu 300k/lô, khoảng 3 đ/mét tới (1 hộp phay 4 đường). Bot ước mét tới = chu vi các miếng chipboard."
     },
     "dung_hop": {
       "ten": "Dựng hộp",
@@ -212,10 +181,12 @@
       "uoc_tinh": true
     },
     "boi_nap_keo": {
-      "ten": "Bồi áo hộc nắp kéo (thợ tay nghề cao, +15k/hộp)",
+      "ten": "Nắp kéo (bồi áo hộc, thợ tay nghề cao)",
       "don_vi": "con",
       "gia": 15000,
-      "san": 0
+      "san": 0,
+      "cong_vao_gia_ban": true,
+      "_ghi_chu": "My xác nhận 12/10: nắp kéo cộng thẳng 15.000 đ vào GIÁ BÁN, không nhân lãi, vì nguyên liệu giống hộp nắp rời (BG00865: 105k → 120k, 110k → 125k)."
     },
     "quai_tui": {
       "ten": "Quai túi (cặp)",
@@ -228,24 +199,17 @@
     "be_demi": {
       "ten": "Bế demi",
       "don_vi": "nhip",
-      "gia": 750,
-      "gia_toi_thieu": 450,
-      "bac_nhip": [
-        [
-          1000,
-          750
-        ],
-        [
-          3000,
-          600
-        ],
-        [
-          999999999,
-          450
-        ]
-      ],
+      "gia": 450,
       "san": 200000,
-      "_ghi_chu": "My: bế demi tối thiểu 200k/lô; đơn giá nhịp lấy như bế thường (chưa xác nhận)"
+      "_ghi_chu": "My: bế demi tối thiểu 200k/lô; khuôn viền đơn giản 450 đ/nhịp."
+    },
+    "day_treo": {
+      "ten": "Dây treo thẻ bài",
+      "don_vi": "con",
+      "gia": 200,
+      "gia_2_gut": 300,
+      "san": 0,
+      "_ghi_chu": "My: dây treo 1 gút 200 đ/dây, 2 gút 300 đ/dây."
     }
   },
   "pct_van_chuyen": 0.05,
@@ -258,7 +222,7 @@
     500
   ],
   "don_kts": {
-    "_ghi_chu": "In nhanh (KTS): tiền in theo bảng My (561 đ/bản in màu, 247 đ trắng đen; ≤35,4cm 1 bản, ≤48,7cm 2 bản, ≤120cm 4 bản), chưa gồm khấu hao máy. Chỉ nhận Couche ≤300g, Ivory/Bristol ≤250g. Gia công và khuôn tính như thường; 'phi_lo' là mức tối thiểu mỗi nhóm công đoạn (sổ tay BG00874). Bot chọn cách rẻ hơn giữa in nhanh và offset.",
+    "_ghi_chu": "In nhanh (KTS): 2.000 đ/tờ A4 in 1 mặt, 3.000 đ in 2 mặt, đã gồm giấy; tờ dài hơn nhân số bản in. Chỉ nhận Couche ≤300g, Ivory/Bristol ≤250g. Gia công và khuôn tính như thường; 'phi_lo' là mức tối thiểu mỗi nhóm công đoạn (sổ tay BG00874). Bot chọn cách rẻ hơn giữa in nhanh và offset.",
     "tu_sua_bai": 5,
     "phi_lo": {
       "Cán màng (lô)": {
@@ -330,10 +294,10 @@
     ],
     "le_cm": 0.5,
     "bang_in": {
-      "_ghi_chu": "Bảng tính tiền in nhanh (KTS) trên giấy của My, ảnh gửi 12/10/2026. Giá mỗi BẢN IN, mỗi mặt; CHƯA gồm tiền giấy và khấu hao máy. Số bản in theo chiều dài tờ.",
-      "don_gia_ban_in": {
-        "mau": 561,
-        "trang_den": 247
+      "_ghi_chu": "My 12/10/2026: khổ A4 in màu 1 mặt 2.000 đ/tờ, 2 mặt 3.000 đ/tờ, ĐÃ GỒM GIẤY. Tờ dài hơn nhân theo số bản in (A3 ×2, khổ banner ×4). Bảng 561 đ/bản in màu, 247 đ trắng đen là phí trả nhà bán máy, chỉ để tham khảo.",
+      "gia_to_a4_gom_giay": {
+        "1": 2000,
+        "2": 3000
       },
       "so_ban_in_theo_chieu_dai_cm": [
         [
@@ -361,9 +325,11 @@
     "thiep_a4_2_mat": {
       "_ghi_chu": "My 12/10 (câu 12): thiệp lô nhỏ in KTS, 1 tờ A4 in 2 mặt tính 10.000 đ/tờ rồi dàn kích thước ra GIÁ BÁN.",
       "gia_ban_moi_to": 10000
-    }
+    },
+    "in_toi_thieu_lo": 500000,
+    "_ghi_chu_in_toi_thieu_lo": "My 12/10: đơn số lượng ít tính tiền in theo LÔ (công dàn bài, set máy, bản in, khấu hao, thợ), tính theo con là lỗ. Mức 500k lấy từ sổ My đơn BG00874 (90 hộp lạp xưởng ghi 'In 500K'). Không áp cho thiệp/card cắt thẳng vì My đã có giá 10.000 đ/tờ A4."
   },
-  "_hop_cung": "Đối chiếu 4 báo giá thật BG00865 (12/10/2026): chipboard 1.780 đ/miếng 44×26 theo sổ tay My ≈ 13 tr/tấn loại 1200g; hộp cứng mặc định IN OFFSET (PDF My ghi 'In offset 4 màu'); bế 4 khuôn = 4 lô × tối thiểu 300k. Sau 3 sửa này bot lệch −2% đến +7% so với giá My. My 12/10: 4 thành phần = 4 khuôn; bồi 2.200 đ/m², lô tối thiểu 300k; nắp kéo +15k/hộp. Phay rãnh, dựng hộp chưa có đơn giá riêng → ước tính.",
+  "_hop_cung": "My 12/10/2026: chipboard 12 tr/tấn; 4 thành phần = 4 khuôn bế; phay rãnh tối thiểu 300k/lô (3 đ/mét tới); bồi 2.200 đ/m², lô tối thiểu 300k; nắp kéo +15k/hộp cộng thẳng giá bán; lãi ít nhất 40%. Hộp cứng LUÔN in offset kể cả dưới 100 cái, vì in nhanh không đủ khổ. Giá vốn hộp 30×12×7 ×100 cái ≈ 79k, khớp '80K' trong sổ My. Chưa có: đơn giá dựng hộp, nam châm.",
   "cong_in_toi_thieu_theo_mau": {
     "1": 600000,
     "2": 900000,
@@ -391,7 +357,7 @@
       "thung_carton"
     ]
   },
-  "_decal": "My 12/10/2026: decal giấy 11.000 đ/m², cán màng mờ 1 mặt, bế demi tối thiểu 200k/lô. Decal nhựa chưa có giá.",
+  "_decal": "My 12/10/2026: decal giấy 11.000 đ/m², cán màng mờ 1 mặt, bế demi tối thiểu 200k/lô. Decal nhựa chưa có giá. In nhanh decal: 2.000 đ/tờ A4 (giá in nhanh của My) cộng tiền decal 11.000 đ/m², vì giá in nhanh chỉ gồm giấy thường.",
   "bac_loi_nhuan": {
     "_ghi_chu": "My 12/10/2026: đơn nhỏ 30-40%, từ 1.000 sp 30%, đơn lặp lại từ 3.000 sp 25%. My thấy bot cao nên đơn nhỏ lấy 30% (mức thấp của khung). Tin ghi 'lợi nhuận x%' thì theo tin.",
     "bac": [
@@ -513,7 +479,8 @@
     },
     "thung_carton": {
       "ten": "Thùng / hộp carton sóng",
-      "can": "dài × rộng × cao (cm), số lớp và loại sóng (3 lớp E/B, 5 lớp BC…), kiểu hộp (thùng A1, hộp nắp gài mailer), in mấy màu, số lượng"
+      "can": "dài × rộng × cao (cm), số lớp và loại sóng (3 lớp E/B, 5 lớp BC…), kiểu hộp (thùng A1, hộp nắp gài mailer), in mấy màu, số lượng",
+      "_ghi_chu": "My 12/10: sóng E 7.000 đ/m², nhưng khó tự tính vì phải dàn đúng chiều sóng → bot chưa tự báo, chuyển My."
     },
     "the_nhua": {
       "ten": "Thẻ nhựa",
@@ -538,5 +505,9 @@
     "móc treo": "móc treo",
     "định hình": "khay định hình",
     "ruy băng": "ruy băng (chưa gồm dây)"
+  },
+  "pct_loi_nhuan_theo_loai": {
+    "_ghi_chu": "My 12/10: hộp cứng lãi ít nhất 40% vì tính cả rủi ro hàng hư.",
+    "hop_cung": 0.4
   }
 }

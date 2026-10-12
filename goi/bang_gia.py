@@ -10,9 +10,10 @@ LOAI = {
     "hop_gap":   {"co_kho_trai": True,  "bot_tai_dan": True,  "giay": "Ivory",  "gsm": 300},
     "hop_cung":  {"co_kho_trai": True,  "bot_tai_dan": False, "giay": "Couche", "gsm": 150},
     "tui_giay":  {"co_kho_trai": True,  "bot_tai_dan": True,  "giay": "Couche", "gsm": 250},
-    "thiep":     {"co_kho_trai": False, "bot_tai_dan": False, "giay": "Ivory",  "gsm": 300},
-    "tem_decal": {"co_kho_trai": False, "bot_tai_dan": False, "giay": "Ivory",  "gsm": 1},
+    "thiep":     {"co_kho_trai": False, "bot_tai_dan": False, "giay": "Ivory",  "gsm": 300, "khuon_don_gian": True},
+    "tem_decal": {"co_kho_trai": False, "bot_tai_dan": False, "giay": "Ivory",  "gsm": 1,   "khuon_don_gian": True},
 }
+# khuon_don_gian: khuôn bế chỉ có đường viền (thẻ, tấm, tem) → My tính 450 đ/nhịp thay vì 750 đ/nhịp của hộp và túi.
 LOAI_MAC_DINH = "hop_gap"
 
 

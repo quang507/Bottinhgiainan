@@ -32,11 +32,11 @@ LOAI = [
 ]
 GIAY = [
     ("Couche Matt", r"couch[eé] ?matt?|c ?matt"),
-    ("Ivory", r"ivory|\bi ?\d{3}\b"),
-    ("Couche", r"couch[eé]|\bc ?\d{2,3}\b"),
-    ("Kraft", r"kraft|\bk ?\d{3}\b"),
-    ("Duplex", r"duplex|\bd ?\d{3}\b"),
-    ("Bristol", r"bristol|\bb ?\d{3}\b"),
+    ("Ivory", r"ivory|\bi ?\d{3}(?!\d)"),
+    ("Couche", r"couch[eé]|\bc ?\d{2,3}(?!\d)"),
+    ("Kraft", r"kraft|\bk ?\d{3}(?!\d)"),
+    ("Duplex", r"duplex|\bd ?\d{3}(?!\d)"),
+    ("Bristol", r"bristol|\bb ?\d{3}(?!\d)"),
     ("Ford", r"\bfor[dt]\b"),
 ]
 KIEU = r"nắp gài|đáy khóa|đáy khoá|đáy cài|đáy gài|âm dương|nắp rời|bao diêm|nắp kéo|hộp rút|nam châm|hộp gối|móc đáy"
@@ -75,7 +75,7 @@ def _spec_trong():
             "gia_giay_tr_tan": None, "tu_sua_bai": None, "kho_giay": None, "so_con_to": None, "pct_loi_nhuan": None,
             "khuon_be_nghin": None, "khong_proof": False, "khuon_co_san": False, "gia_cong_tuy_chinh": [],
             "ep_kim_kt": None, "dap_noi_kt": None, "dap_noi_am_duong": False, "so_mep_dan": None, "tui_2_manh": False,
-            "gia_quai": None, "can_mang_2_mat": False, "kieu_in_2_mat": None, "in_kts": None, "y_dinh": "bao_gia",
+            "gia_quai": None, "can_mang_2_mat": False, "uv_kt": None, "cua_so_kt": None, "day_2_gut": False, "kieu_in_2_mat": None, "in_kts": None, "y_dinh": "bao_gia",
             "dong_hang_khac": "", "loai_anh": "", "noi_dung_anh": ""}
 
 
@@ -151,6 +151,10 @@ def phan_tich(tin: str, da_biet: dict = None):
             s["ep_kim_kt"] = a[:2]; moi.add("x")
         elif re.search(r"dập nổi|dập chìm", truoc):
             s["dap_noi_kt"] = a[:2]; moi.add("x")
+        elif re.search(r"cửa sổ[^,;.\n]{0,12}$", truoc) and len(a) == 2:
+            s["cua_so_kt"] = a[:2]; moi.add("x")
+        elif re.search(r"\buv\b[^,;.\n]{0,14}$", truoc) and len(a) == 2:
+            s["uv_kt"] = a[:2]; moi.add("x")
         else:
             dims_sp.append(a)
     t3 = DIM.sub(" ", t2)
@@ -233,7 +237,8 @@ def phan_tich(tin: str, da_biet: dict = None):
     if re.search(r"\buv\b", t3): them("uv_dinh_vi")
     if re.search(r"bồi giấy|bồi 2 lớp", t3) and s.get("loai") != "hop_cung": them("boi_giay")
     if re.search(r"cửa sổ", t3): them("cua_so")
-    if re.search(r"xỏ dây", t3) and not any("dây" in g["ten"].lower() for g in s["gia_cong_tuy_chinh"]): them("xo_day")
+    if re.search(r"2 gút|hai gút", t3): s["day_2_gut"] = True
+    if re.search(r"xỏ dây|dây treo", t3) and not any("dây" in g["ten"].lower() for g in s["gia_cong_tuy_chinh"]): them("xo_day")
     if re.search(r"\bbế\b", t3) and s.get("loai") in ("thiep",) and not tuy_chinh: them("be")
     if re.search(r"bỏ ép kim|không ép kim", t3): bo("ep_kim")
     if re.search(r"bỏ dập nổi|không dập", t3): bo("dap_noi")
