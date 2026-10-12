@@ -141,12 +141,23 @@ def _goi_gemini(noi_dung: str, anh: tuple = None) -> "Spec":
         "contents": [{"role": "user", "parts": parts}],
         "generationConfig": {"responseMimeType": "application/json", "responseJsonSchema": _schema_gemini(), "temperature": 0},
     }
-    r = httpx.post(f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
-                   params={"key": key}, json=body, timeout=60)
-    if r.status_code != 200:
-        raise RuntimeError(f"Gemini {r.status_code}: {r.text[:300]}")
-    text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
-    return Spec.model_validate(json.loads(text))
+    import time as _t
+    last = None
+    for model in (GEMINI_MODEL, "gemini-3.5-flash-lite"):
+        for lan in range(3):
+            r = httpx.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                           params={"key": key}, json=body, timeout=60)
+            if r.status_code == 200:
+                text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+                return Spec.model_validate(json.loads(text))
+            last = RuntimeError(f"Gemini {model} {r.status_code}: {r.text[:200]}")
+            if r.status_code in (402,):
+                break                      # hết tiền: đổi model cũng vô ích
+            if r.status_code in (429, 503):
+                _t.sleep(2 + 3 * lan)      # quá tải/hạn mức: chờ rồi thử lại
+                continue
+            break
+    raise last
 
 
 def boc_tach(client: anthropic.Anthropic, tin_moi: str, da_biet: dict = None, anh: tuple = None) -> dict:
@@ -160,7 +171,7 @@ def boc_tach(client: anthropic.Anthropic, tin_moi: str, da_biet: dict = None, an
             return chuan_hoa(_goi_gemini(noi_dung, anh))
         except RuntimeError as e:
             # hết credit / quá hạn mức Gemini → thử Claude nếu có key
-            if client is None or not any(c in str(e) for c in ("402", "429", "RESOURCE_EXHAUSTED")):
+            if client is None or not any(c in str(e) for c in ("402", "429", "503", "RESOURCE_EXHAUSTED", "UNAVAILABLE")):
                 raise
     if client is None:
         raise RuntimeError("Chưa cấu hình LLM nào có tiền (GEMINI_API_KEY hoặc ANTHROPIC_API_KEY)")
