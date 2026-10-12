@@ -11,7 +11,7 @@ import httpx
 
 sys.path.insert(0, str(Path(__file__).parent))
 from goi import engine                      # noqa: E402
-from goi.extract import boc_tach, Spec      # noqa: E402
+from goi.extract import boc_tach            # noqa: E402
 
 ROOT = Path(__file__).parent
 for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines() if (ROOT / ".env").exists() else []:
@@ -41,7 +41,7 @@ def luu_state():
 def api(method, **params):
     r = http.post(f"{BASE}/{method}", json=params)
     data = r.json()
-    if not data.get("ok"):
+    if not data.get("ok") and data.get("error_code") != 408:   # 408 = hết thời gian chờ long-polling, bình thường
         log.warning("API %s lỗi: %s", method, data)
     return data
 
@@ -74,8 +74,7 @@ def tra_loi(chat_id: str, text: str) -> str:
                 "Bot sẽ hỏi lại nếu thiếu, rồi báo giá 3 bậc số lượng. Gõ 'reset' để làm đơn mới, 'giá' để xem bảng giá.")
 
     da_biet = state.get(chat_id, {}).get("spec")
-    spec: Spec = boc_tach(client, t, da_biet)
-    s = spec.model_dump()
+    s = boc_tach(client, t, da_biet)
     state[chat_id] = {"spec": s, "luc": time.time()}
     luu_state()
     thieu = [x for x in s["thieu"]] or [k for k in ("loai", "dai", "rong") if not s.get(k)] or ([] if s["so_luong"] else ["số lượng"])
@@ -103,8 +102,8 @@ def xu_ly(update: dict):
     try:
         reply = tra_loi(chat_id, text)
     except Exception as e:  # noqa: BLE001
-        log.exception("Lỗi xử lý")
-        reply = f"Bot gặp lỗi khi tính ({type(e).__name__}). Gửi lại yêu cầu hoặc gõ 'reset' giúp em."
+        log.exception("Lỗi xử lý tin: %s", text[:200])
+        reply = f"Bot gặp lỗi khi tính ({type(e).__name__}: {str(e)[:150]}). Anh Quang sẽ sửa, gửi lại sau hoặc gõ 'reset' giúp em."
     gui(chat_id, reply)
 
 

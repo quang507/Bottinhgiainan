@@ -195,6 +195,10 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
             for tong_tp, u_, so_to_, tien_in_, kem_, nhan in phuong_an:
                 if tot_nhat is None or tong_tp < tot_nhat[0]:
                     tot_nhat = (tong_tp, W, H, u_, so_to_, gt, tien_in_, cat, kem_, nhan)
+        if tot_nhat is None:
+            r["dong"].append((f"{tp.ten}: không có phương án in phù hợp (khổ {tp.trai_w}×{tp.trai_h}, {tp.so_mat} mặt)", 0))
+            r["uoc_tinh"].append(f"{tp.ten.lower()} chưa tính được, kiểm tra khổ/số mặt")
+            continue
         _, W, H, u, so_to, gt, tien_in, cat, kem_tp, nhan = tot_nhat
         if nhan and "(ước tính)" in nhan:
             r["uoc_tinh"].append(nhan)
