@@ -19,11 +19,15 @@ def _grid_plus_strip(W, H, w, h):
     return n + max(phai, duoi)
 
 
-def ups(W, H, w, h):
-    """Số con/tờ: thử 2 chiều, mỗi chiều lưới + dải dư xoay con."""
+def ups(W, H, w, h, bu_xen=None):
+    """Số con/tờ: trừ lề kẹp nhíp 1 cạnh, cộng bù xén quanh mỗi con, thử 2 chiều, lưới + dải dư xoay con."""
     if not w or not h:
         return 0
-    return max(_grid_plus_strip(W, H, w, h), _grid_plus_strip(W, H, h, w))
+    BB = P.get("binh_bai", {})
+    le = BB.get("le_nhip_cm", 0)
+    bx = BB.get("bu_xen_cm", {}).get("hop_gap", 0) if bu_xen is None else bu_xen
+    W2, H2, w2, h2 = W, H - le, w + bx, h + bx
+    return max(_grid_plus_strip(W2, H2, w2, h2), _grid_plus_strip(W2, H2, h2, w2), _grid_plus_strip(H2, W2, w2, h2), _grid_plus_strip(H2, W2, h2, w2))
 
 
 CAT_TAI = (0, 0.5, 1.0, 1.5)   # mức bớt tai dán (cm) được phép thử
@@ -110,6 +114,7 @@ class DonHang:
     gc_tuy_chinh: list = field(default_factory=list)   # [(tên, đ/cái)]
     mac_dinh: list = field(default_factory=list)       # thông số khách không nói, bot tự lấy
     kts: bool = None                                   # None = tự chọn theo số lượng
+    khuon_co_san: bool = False
     kieu_2_mat: str = None                             # AB | tu_tro | tro_nhip | None = tự chọn rẻ nhất
     loai_sp: str = ""
     ep_kim_kt: tuple = None
@@ -289,7 +294,9 @@ def tinh(don: DonHang, SL: int, kts: bool = None):
                 tong += f["gia"]
                 r["co_dinh"] += f["gia"]
         r["uoc_tinh"].append("phí lô in nhanh")
-    if don.khuon_be:
+    if don.khuon_be and getattr(don, "khuon_co_san", False):
+        r["dong"].append(("Khuôn bế: có sẵn", 0))
+    elif don.khuon_be:
         if don.khuon_be_tien is not None:
             kb = don.khuon_be_tien
         elif kts and don.loai_sp in K.get("khuon_cho_loai", []):
@@ -339,6 +346,10 @@ def dung_don(spec: dict) -> DonHang:
         don.khuon_be_tien = spec["khuon_be_nghin"] * 1000
     don.proof = not spec.get("khong_proof")
     don.kts = spec.get("in_kts")
+    don.khuon_co_san = bool(spec.get("khuon_co_san"))
+    if don.loai_sp in ("hop_gap", "tui_giay") and don.thanh_phan and don.thanh_phan[0].gsm >= 300 \
+            and not any(g in don.gia_cong for g in ("can_mo", "can_bong")):
+        don.mac_dinh.append("không cán màng → " + P["canh_bao"]["giay_day_khong_can_mang"])
     don.kieu_2_mat = spec.get("kieu_in_2_mat")
     don.ep_kim_kt = tuple(spec["ep_kim_kt"]) if spec.get("ep_kim_kt") else None
     don.dap_noi_kt = tuple(spec["dap_noi_kt"]) if spec.get("dap_noi_kt") else None
@@ -487,6 +498,7 @@ if __name__ == "__main__":
     P["tu_sua_bai"] = 300
     P["tu_sua_bai_theo_kho"] = {"65x43": 300}
     P["kho_giay"] = [[65, 43]]
+    P["binh_bai"] = {"le_nhip_cm": 0, "bu_xen_cm": {}}
     r = tinh(DonHang("Đối chiếu", [ThanhPhan("Hộp giấy", "Ivory", 300, 40, 60, 1, 4, 1)], [], khuon_be=0), 1000)
     for d in r["dong"]:
         print(f"{d[0]:60} {d[1]:>14,.1f}")

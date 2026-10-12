@@ -372,5 +372,19 @@
       "Giá chưa gồm VAT 8%. Khuôn nằm trong chi phí cố định, không tặng; ưu đãi là thiết kế miễn phí, hậu mãi, đơn lặp lại.",
       "Thời gian: sản phẩm làm riêng 7–10 ngày sau duyệt file, mẫu 3–7 ngày; sản phẩm có sẵn 2–3 ngày sau chốt file logo; trên 5.000 sp thỏa thuận. Chưa tính thời gian vận chuyển."
     ]
+  },
+  "binh_bai": {
+    "_ghi_chu": "Học từ cách tinhgiain.com cấu hình: trừ lề kẹp nhíp máy in và bù xén giữa các con khi tính số con/tờ.",
+    "le_nhip_cm": 1.0,
+    "bu_xen_cm": {
+      "hop_gap": 0.5,
+      "hop_cung": 0.5,
+      "tui_giay": 0.5,
+      "thiep": 0.3,
+      "tem_decal": 0.3
+    }
+  },
+  "canh_bao": {
+    "giay_day_khong_can_mang": "Giấy ≥300g không cán màng dễ vỡ gân khi cấn gấp, nên tư vấn khách cán màng."
   }
 }

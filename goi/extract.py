@@ -44,6 +44,7 @@ class Spec(BaseModel):
     pct_loi_nhuan: float = Field(description="Lợi nhuận dạng thập phân nếu tin nói rõ (vd 'lợi nhuận 0' → 0, '38%' → 0.38); -1 nếu không nói")
     khuon_be_nghin: int = Field(description="Tiền khuôn bế nghìn đồng nếu tin nói rõ (vd 'khuôn 500k' → 500); -1 nếu không")
     khong_proof: bool = Field(description="true nếu tin nói 'không proof'/'bỏ proof'")
+    khuon_co_san: bool = Field(description="true nếu tin nói khuôn có sẵn / đã có khuôn / khách in lại / đơn lặp lại (không tính tiền khuôn)")
     gia_cong_tuy_chinh: List[GiaCongTuyChinh] = Field(description="Các gia công có kèm đơn giá đ/cái trong tin (vd 'bế 1401đ/cái', 'dán dây 1500'). Gia công nào đã có ở đây thì KHÔNG đưa vào gia_cong nữa.")
     ep_kim_kt: List[float] = Field(description="[dài, rộng] cm vùng ép kim nếu tin nói (vd 'ép kim logo 5x3cm' → [5,3]); rỗng nếu không")
     dap_noi_kt: List[float] = Field(description="[dài, rộng] cm vùng dập nổi nếu tin nói; rỗng nếu không")
