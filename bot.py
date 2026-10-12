@@ -51,10 +51,16 @@ def gui(chat_id, text):
         api("sendMessage", chat_id=chat_id, text=text[i:i + 1990])
 
 
+THANG = [100, 200, 300, 500, 1000, 2000, 3000, 5000, 10000, 20000, 50000]
+
+
 def bac_so_luong(sl: list) -> list:
-    mac_dinh = engine.P["bac_so_luong_mac_dinh"]
-    out = list(dict.fromkeys([q for q in sl if q > 0] + mac_dinh))
-    return sorted(out)[:4] if len(sl) != 1 else [sl[0]] + [q for q in mac_dinh if q > sl[0]][:2]
+    """Khách nêu nhiều mức → dùng đúng các mức đó; nêu 1 mức → thêm 2 mức lớn hơn trên thang chuẩn."""
+    sl = [q for q in sl if q > 0]
+    if len(sl) >= 2:
+        return sorted(dict.fromkeys(sl))[:4]
+    q0 = sl[0] if sl else engine.P["bac_so_luong_mac_dinh"][0]
+    return [q0] + [q for q in THANG if q > q0][:2]
 
 
 def tai_anh(url: str):

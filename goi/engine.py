@@ -373,7 +373,7 @@ def dung_don(spec: dict) -> DonHang:
             don.mac_dinh.append(f"định lượng {don.thanh_phan[0].gsm}g")
     if spec.get("so_mau") is None:
         don.mac_dinh.append(f"in {don.thanh_phan[0].so_mau} màu")
-    if not spec.get("so_mat"):
+    if not spec.get("so_mat") and don.thanh_phan[0].so_mau:
         don.mac_dinh.append(f"{don.thanh_phan[0].so_mat} mặt")
     if not spec.get("gia_cong") and not don.gc_tuy_chinh:
         don.mac_dinh.append("gia công cơ bản (bế, dán)")
@@ -414,7 +414,7 @@ def _dung_don(spec: dict) -> DonHang:
         return DonHang(ten_hc, tp, gc, khuon_be=4, uoc_tinh=["chipboard, phay rãnh, dựng hộp chờ My chốt"])
     if loai == "thiep":
         w, h = (D or 8), (R or 12)
-        tp = [ThanhPhan("Thiệp", giay, gsm, w + 0.6, h + 0.6, 1, mau, mat if spec.get("so_mat") else 2)]
+        tp = [ThanhPhan("Thiệp" if mau else "Tấm giấy", giay, gsm, w + 0.6, h + 0.6, 1, mau, (mat if spec.get("so_mat") else 2) if mau else 1)]
         if "be" not in gc:
             gc.append("cat_tp")
         return DonHang(ten or ("Tấm giấy bế" if "be" in gc else "Thiệp"), tp, gc, khuon_be=1 if "be" in gc else 0)
@@ -486,13 +486,16 @@ def fmt_k(n):
 
 def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
     """Một tin Zalo gọn: quy cách · giá 3 mức · bóc tách 1 dòng · so sánh · ước tính/mặc định · chính sách."""
-    kt = "×".join(str(x) for x in (spec.get("dai"), spec.get("rong"), spec.get("cao")) if x)
+    def so(x):
+        return str(int(x)) if float(x).is_integer() else str(x)
+    kt = "×".join(so(x) for x in (spec.get("dai"), spec.get("rong"), spec.get("cao")) if x)
     tp0 = don.thanh_phan[0] if don.thanh_phan else None
     def ten_giay(tp):
         return "Decal giấy" if tp.loai == "Decal" else f"{tp.loai} {tp.gsm}g"
     quy_cach = (f"{ten_giay(tp0)}, " + (f"in {tp0.so_mau} màu {tp0.so_mat} mặt" if tp0.so_mau else "không in")) if tp0 else ""
     gc = [P["gia_cong"][g]["ten"] for g in don.gia_cong if g in P["gia_cong"]] + [f"{t} {fmt(g)}đ" for t, g in don.gc_tuy_chinh]
-    ten = don.ten if (kt and kt.replace("×", "x") in don.ten.replace("×", "x").replace(".0", "")) else f"{don.ten} {kt} cm"
+    ten_chuan = don.ten.replace("×", "x").replace("*", "x")
+    ten = don.ten if (kt and kt.replace("×", "x") in ten_chuan) else f"{don.ten} {kt} cm"
     L = [f"📦 {ten} · {quy_cach}" + (" · " + ", ".join(gc) if gc else "")]
     for r in ket_qua:
         duoi = "(theo bảng giá My)" if r.get("niem_yet") else f"(vốn {fmt(r['gia_von'])}, lãi {int(round(r['pct_ln'] * 100))}%)"
@@ -515,13 +518,30 @@ def soan_tin(spec: dict, don: DonHang, ket_qua: list) -> str:
         L.append("🔁 Khổ trải vượt 33×60 nên buộc in offset.")
     uoc = [u.replace(" (ước tính)", "") for u in dict.fromkeys(r0["uoc_tinh"])]
     md = r0["mac_dinh"]
+    can_them = []
+    if any("khổ trải" in u for u in uoc):
+        can_them.append("file khuôn hoặc khổ trải")
+    if any(m.startswith("giấy") or m.startswith("định lượng") for m in md):
+        can_them.append("loại giấy, định lượng")
+    if any("gia công" in m for m in md):
+        can_them.append("gia công cần làm (cán màng, ép kim…)")
+    if any("vùng" in m for m in md):
+        can_them.append("kích thước vùng ép kim/dập nổi")
+    if any("quai" in m for m in md):
+        can_them.append("loại dây quai")
+    if any("My chốt" in u for u in uoc):
+        can_them.append("đơn giá hộp cứng (chờ My)")
+    khac = [u for u in uoc if "khổ trải" not in u and "My chốt" not in u]
+    canh_bao = [m for m in md if "→" in m]
     dong = []
-    if uoc:
-        dong.append("⚠️ Ước tính: " + "; ".join(uoc) + ".")
-    if md:
-        dong.append("ℹ️ Mặc định: " + ", ".join(md) + ".")
-    if not uoc:
+    if can_them:
+        dong.append("📝 Gửi thêm để chuẩn hơn: " + "; ".join(can_them) + ".")
+    elif not uoc:
         dong.append("✅ Đủ thông số.")
+    if khac:
+        dong.append("Tạm tính: " + "; ".join(khac) + ".")
+    if canh_bao:
+        dong.append("⚠️ " + " ".join(m.split("→ ", 1)[1] for m in canh_bao))
     L.append(" ".join(dong))
     L.append("📎 Chưa VAT 8%, chưa gồm vận chuyển. Không tặng khuôn. SX 7–10 ngày sau duyệt file, mẫu 3–7 ngày; hàng có sẵn 2–3 ngày; trên 5.000 sp thỏa thuận.")
     msg = "\n".join(L)
