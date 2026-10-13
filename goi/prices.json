@@ -509,5 +509,11 @@
   "pct_loi_nhuan_theo_loai": {
     "_ghi_chu": "My 12/10: hộp cứng lãi ít nhất 40% vì tính cả rủi ro hàng hư.",
     "hop_cung": 0.4
+  },
+  "hop_cung": {
+    "_ghi_chu": "File My gửi 13/10/2026 'Cách tính hộp cứng âm dương: 6 thành phần'. Bìa carton nắp, đáy (1200gsm): dài + thành hộp × rộng + thành hộp. Giấy áo nắp, đáy (C150 cán màng): cộng thêm 4 cm mỗi chiều (tai bồi mỗi bên tối thiểu 2 cm). Giấy lót nắp, đáy (C150 cán màng): bằng khổ carton, không cộng tai. 'Thành hộp' = thành 2 bên = 2 × cao (khớp sổ My: hộp 30×12×7 có miếng carton 44×26).",
+    "chipboard_gsm": 1200,
+    "tai_boi_cm": 4,
+    "can_mang_mac_dinh": "can_mo"
   }
 }

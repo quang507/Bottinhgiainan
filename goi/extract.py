@@ -71,6 +71,7 @@ class Spec(BaseModel):
     tui_2_manh: bool = Field(description="true nếu túi giấy dán 2 mảnh")
     gia_quai: float = Field(description="Giá quai túi đ/cặp nếu tin nói; 0 nếu không")
     can_mang_2_mat: bool = Field(description="true nếu tin nói cán màng (mờ/bóng) 2 mặt")
+    khong_can_mang: bool = Field(description="true nếu tin nói rõ KHÔNG cán màng")
     kieu_in_2_mat: Literal["AB", "tu_tro", "tro_nhip", ""] = Field(description="Chỉ khi in 2 mặt và tin nói rõ: bình AB/sheet-wise → AB; tự trở/work and turn → tu_tro; trở nhíp/work and tumble → tro_nhip; rỗng nếu không nói")
     loai_anh: Literal["san_pham", "khuon", "bang_gia", "khac", ""] = Field(description="Chỉ khi có ảnh kèm: ảnh sản phẩm/mockup → san_pham; file khuôn/dieline → khuon; bảng giá → bang_gia; khác → khac. Không có ảnh → rỗng.")
     noi_dung_anh: str = Field(description="Chỉ khi có ảnh: mô tả ngắn nội dung ảnh (ví dụ bảng giá thì liệt kê các dòng giá; khuôn thì ghi kích thước trải nếu đọc được). Không có ảnh → rỗng.")

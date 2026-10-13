@@ -211,7 +211,6 @@ def _tinh_thanh_phan(don: DonHang, SL, kts, r, tam):
                 r["co_dinh"] += pa.tien_in
         tien_giay = pa.so_to * pa.gia_to
         tam["tong_nhip"] += so_nhip(don, tp, SL, pa.con)
-        tam["dien_tich_sp"] += tp.trai_w * tp.trai_h * tp.con_moi_sp / 10000
         ten_giay = "Decal giấy" if tp.loai == "Decal" else f"{tp.ten} {tp.loai} {tp.gsm}g"
         trai = f"trải {_so(tp.trai_w - pa.bot_tai)}×{_so(tp.trai_h)}, " if don.co_kho_trai else ""
         bai = f"{trai}{pa.con} con/tờ {pa.W}×{pa.H}, {_fmt(pa.so_to)} tờ"
@@ -245,9 +244,24 @@ def _ap_toi_thieu_lo_in_nhanh(don: DonHang, r, tam):
 
 
 # ---------------------------------------------------------------- bước 3: gia công
+def dien_tich_gia_cong(key, don: DonHang) -> float:
+    """m² giấy của MỘT sản phẩm mà công đoạn tính theo diện tích phải làm (cán màng, bồi). Không tính carton.
+    Hộp cứng: áo + lót (My: cả hai đều cán màng, đều bồi lên carton). Bồi giấy 2 lớp: diện tích một lớp bồi.
+    Còn lại: cán màng phần có in."""
+    def m2(ds):
+        return sum(tp.trai_w * tp.trai_h * tp.con_moi_sp for tp in ds) / 10000
+    giay = [tp for tp in don.thanh_phan if tp.loai != "Chipboard"]
+    lop_boi = [tp for tp in giay if tp.ten == "Lớp giấy bồi"]
+    if key == "boi_giay":
+        return m2(lop_boi or giay[:1])
+    if don.loai_sp == "hop_cung":
+        return m2(giay)
+    return m2([tp for tp in giay if tp.so_mau] or [tp for tp in giay if tp not in lop_boi] or giay)
+
+
 def _gc_theo_m2(key, g, don, SL, tam, r):
     he_so = 2 if (key in ("can_mo", "can_bong") and don.can_mang_2_mat) else 1
-    tien = max(SL * tam["dien_tich_sp"] * g["gia"] * he_so, g.get("san", 0))
+    tien = max(SL * dien_tich_gia_cong(key, don) * g["gia"] * he_so, g.get("san", 0))
     return (g["ten"] + " 2 mặt" if he_so == 2 else g["ten"]), tien, 0
 
 
@@ -470,7 +484,7 @@ def tinh(don: DonHang, SL: int, kts: bool = None) -> dict:
         else:
             kts = False
     r = {"SL": SL, "dong": [], "co_dinh": 0.0, "uoc_tinh": list(don.uoc_tinh), "mac_dinh": list(don.mac_dinh), "kts": kts}
-    tam = {"tong": 0.0, "dien_tich_sp": 0.0, "so_kem": 0, "tong_nhip": 0.0, "in_nhanh": 0.0, "dong_in_nhanh": []}
+    tam = {"tong": 0.0, "so_kem": 0, "tong_nhip": 0.0, "in_nhanh": 0.0, "dong_in_nhanh": []}
     _tinh_thanh_phan(don, SL, kts, r, tam)
     if kts:
         _ap_toi_thieu_lo_in_nhanh(don, r, tam)

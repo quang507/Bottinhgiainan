@@ -86,17 +86,27 @@ class _DauVao:
 
 
 def _hop_cung(v: _DauVao) -> DonHang:
-    ao_w, ao_h = v.D + 2 * v.C + 4, v.R + 2 * v.C + 4
-    tp = [ThanhPhan("Áo giấy nắp + đáy", v.giay, v.gsm, ao_w, ao_h, 2, v.mau, 1),
-          ThanhPhan("Lót ruột trơn", v.giay, v.gsm, ao_w, ao_h, 2, 0, 0),
-          ThanhPhan("Chipboard nắp + đáy", "Chipboard", 1200, v.D + 2 * v.C, v.R + 2 * v.C, 2, 0, 0)]
-    gc = [g for g in v.gc if not g.startswith("dan") and g != "be"] + ["be_hop_cung", "phay_ranh", "dung_hop", "boi_hop_cung"]
+    """6 thành phần (My): carton nắp + đáy, giấy áo nắp + đáy, giấy lót nắp + đáy. Nắp và đáy cùng công thức khổ.
+    Carton và lót = dài + thành × rộng + thành (thành 2 bên = 2 × cao); áo cộng thêm tai bồi 4 cm mỗi chiều."""
+    H = P.get("hop_cung", {})
+    tai = H.get("tai_boi_cm", 4)
+    bia_w, bia_h = v.D + 2 * v.C, v.R + 2 * v.C
+    tp = [ThanhPhan("Áo giấy nắp + đáy", v.giay, v.gsm, bia_w + tai, bia_h + tai, 2, v.mau, 1),
+          ThanhPhan("Giấy lót nắp + đáy", v.giay, v.gsm, bia_w, bia_h, 2, 0, 0),
+          ThanhPhan("Chipboard nắp + đáy", "Chipboard", H.get("chipboard_gsm", 1200), bia_w, bia_h, 2, 0, 0)]
+    gc = [g for g in v.gc if not g.startswith("dan") and g != "be"]
+    mac_dinh = []
+    can = H.get("can_mang_mac_dinh")
+    if can and not any(g in gc for g in ("can_mo", "can_bong")) and not v.spec.get("khong_can_mang"):
+        gc.append(can)                 # My: giấy áo và giấy lót hộp cứng đều cán màng
+        mac_dinh.append("cán màng mờ áo và lót (hộp cứng mặc định cán màng)")
+    gc += ["be_hop_cung", "phay_ranh", "dung_hop", "boi_hop_cung"]
     nap_keo = any(k in v.kieu for k in ("kéo", "rút", "bao diêm", "diêm", "hộc"))
     if nap_keo:
         gc.append("boi_nap_keo")
     ten = v.ten or ("Hộp cứng nắp kéo (bao diêm)" if nap_keo else "Hộp cứng âm dương / nắp rời")
     # 4 khuôn bế: áo nắp, áo đáy, carton nắp, carton đáy (theo My)
-    return DonHang(ten, tp, gc, khuon_be=4, uoc_tinh=["đơn giá dựng hộp chờ My chốt"])
+    return DonHang(ten, tp, gc, khuon_be=4, uoc_tinh=["đơn giá dựng hộp chờ My chốt"], mac_dinh=mac_dinh)
 
 
 def _thiep(v: _DauVao) -> DonHang:

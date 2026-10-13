@@ -91,7 +91,7 @@ def _spec_trong():
             "gia_giay_tr_tan": None, "tu_sua_bai": None, "kho_giay": None, "so_con_to": None, "pct_loi_nhuan": None,
             "khuon_be_nghin": None, "khong_proof": False, "khuon_co_san": False, "gia_cong_tuy_chinh": [],
             "ep_kim_kt": None, "dap_noi_kt": None, "dap_noi_am_duong": False, "so_mep_dan": None, "tui_2_manh": False,
-            "gia_quai": None, "can_mang_2_mat": False, "uv_kt": None, "cua_so_kt": None, "day_2_gut": False, "con_khuon": None, "kieu_in_2_mat": None, "in_kts": None, "y_dinh": "bao_gia",
+            "gia_quai": None, "can_mang_2_mat": False, "uv_kt": None, "cua_so_kt": None, "day_2_gut": False, "con_khuon": None, "khong_can_mang": False, "kieu_in_2_mat": None, "in_kts": None, "y_dinh": "bao_gia",
             "dong_hang_khac": "", "loai_anh": "", "noi_dung_anh": ""}
 
 
@@ -242,7 +242,7 @@ def phan_tich(tin: str, da_biet: dict = None):
         moi.add("gc")
     def bo(k):
         if k in gc: gc.remove(k); moi.add("gc")
-    if re.search(r"không cán|bỏ cán|khỏi cán", t3): bo("can_mo"); bo("can_bong")
+    if re.search(r"không c[áa]ng? màng|không cán|bỏ cán|khỏi cán", t3): bo("can_mo"); bo("can_bong"); s["khong_can_mang"] = True
     else:
         if re.search(r"cán (?:màng )?bóng", t3): bo("can_mo"); them("can_bong")
         elif re.search(r"cán (?:màng )?mờ|cán màng", t3): bo("can_bong"); them("can_mo")
